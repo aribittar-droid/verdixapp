@@ -1,0 +1,1803 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Verdix v1.0</title>
+<style>
+:root{
+  --green:#176b32;--green-2:#24a148;--leaf:#e8f5ed;--soil:#33251b;--sun:#f2c94c;
+  --warn:#b45309;--danger:#b42318;--ok:#157f3b;--ink:#181818;--muted:#686868;
+  --line:#d9d4ca;--paper:#fffdfa;--bg:#f2efe8;--soft:#f8f6f1;--shadow:0 8px 28px rgba(33,25,17,.12);
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;padding-bottom:104px}
+button,input,select,textarea{font:inherit}
+button{cursor:pointer}
+.shell{max-width:520px;margin:0 auto}
+.top{position:sticky;top:0;z-index:20;background:var(--soil);color:#fff;padding:14px 14px 10px;box-shadow:0 4px 18px rgba(0,0,0,.24)}
+.brand{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:12px}
+.brand h1{font-size:19px;line-height:1.05;margin:0;font-weight:850;letter-spacing:-.02em}
+.brand h1 span{color:var(--sun)}
+.sub{font-family:ui-monospace,SFMono-Regular,Consolas,monospace;font-size:11px;color:rgba(255,255,255,.66);margin-top:4px}
+.pill{border:1px solid rgba(242,201,76,.5);background:rgba(242,201,76,.14);color:var(--sun);border-radius:999px;padding:6px 10px;font-weight:800;font-size:12px;white-space:nowrap}
+.nav-row,.treat-row{display:flex;gap:7px;overflow:auto;scrollbar-width:none}
+.nav-row::-webkit-scrollbar,.treat-row::-webkit-scrollbar{display:none}
+.plant-btn,.add-btn{min-width:39px;height:39px;border-radius:999px;border:2px solid rgba(255,255,255,.22);background:transparent;color:rgba(255,255,255,.76);font-size:12px;font-family:ui-monospace,SFMono-Regular,Consolas,monospace;font-weight:800}
+.plant-btn.active{background:var(--sun);border-color:var(--sun);color:var(--soil)}
+.plant-btn.done{border-color:var(--green-2);color:#7ee39a;position:relative}
+.plant-btn.done::after{content:"";position:absolute;right:0;top:0;width:8px;height:8px;border-radius:50%;background:#7ee39a}
+.add-btn{border-style:dashed;font-size:20px}
+.progress{height:5px;background:rgba(255,255,255,.15);border-radius:999px;margin-top:10px;overflow:hidden}
+.progress span{display:block;height:100%;width:0;background:var(--sun);transition:width .25s}
+.tabs{display:flex;gap:4px;background:var(--paper);border-radius:12px;padding:4px;margin:14px;box-shadow:var(--shadow)}
+.tab{flex:1;border:0;background:transparent;border-radius:9px;padding:11px 8px;font-weight:850;color:var(--muted)}
+.tab.active{background:var(--green);color:#fff}
+.phase-select{margin:0 14px 12px;background:var(--paper);border-radius:12px;padding:12px;box-shadow:var(--shadow)}
+.phase-select label{margin-bottom:7px}
+.treat-row{background:var(--leaf);border-bottom:2px solid var(--green);padding:10px 14px}
+.treat-btn{flex:0 0 auto;border:2px solid var(--line);background:#fff;color:var(--muted);border-radius:999px;padding:7px 13px;font-size:13px;font-weight:750}
+.treat-btn.active{background:var(--green);border-color:var(--green);color:#fff}
+.sample-hint{margin:10px 14px -2px;color:var(--muted);font-size:12px;line-height:1.35}
+.main{display:block}
+.main.hidden,.summary.hidden,.phase-panel.hidden,#r3Panel.hidden,.section.hidden{display:none}
+.card,.section,.result,.summary-card{margin:14px;background:var(--paper);border-radius:14px;box-shadow:var(--shadow);overflow:hidden}
+.card{padding:15px;border-left:4px solid var(--green)}
+.card h2,.result h2{margin:0 0 12px;font-size:12px;text-transform:uppercase;letter-spacing:.08em;color:var(--green);font-weight:850}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;min-width:0}
+.full{grid-column:1/-1 !important}
+.field{margin-bottom:13px;min-width:0}
+.field:last-child{margin-bottom:0}
+label{display:block;margin-bottom:6px;color:var(--muted);font-size:11px;text-transform:uppercase;letter-spacing:.06em;font-weight:800}
+input,select,textarea{width:100%;border:2px solid var(--line);border-radius:10px;background:#fbfaf7;color:var(--ink);padding:12px 13px;font-size:16px;min-width:0;box-sizing:border-box}
+input[type=date]{font-size:14px}
+input:focus,select:focus,textarea:focus{outline:0;border-color:var(--green);background:#fff}
+textarea{min-height:90px;resize:vertical;font-size:14px}
+.hint{font-size:11px;color:var(--muted);margin-top:4px}
+.err{display:none;color:var(--danger);font-size:12px;margin-top:5px;font-weight:700}
+.invalid input,.invalid select,.invalid textarea{border-color:var(--danger)}
+.invalid .err{display:block}
+.inline{display:flex;gap:8px;align-items:center}
+.icon-btn{width:44px;min-width:44px;border:0;border-radius:10px;background:var(--green);color:#fff;font-weight:900;font-size:21px}
+.photo-box{border:2px dashed var(--line);border-radius:12px;background:var(--soft);padding:10px;display:grid;gap:9px}
+.photo-actions{display:flex;gap:8px;align-items:center}
+.file-btn{display:inline-flex;align-items:center;justify-content:center;border-radius:10px;background:var(--green);color:#fff;padding:11px 12px;font-weight:850;text-transform:none;letter-spacing:0;font-size:13px;margin:0}
+.file-btn input{display:none}
+.photo-preview{display:none;width:100%;max-height:190px;object-fit:cover;border-radius:10px;border:1px solid var(--line);background:#fff}
+.photo-box.has-photo .photo-preview{display:block}
+.photo-name{font-size:12px;color:var(--muted);line-height:1.35;flex:1}
+.photo-box.invalid{border-color:var(--danger);background:#fff7f6}
+.photo-box.invalid .photo-name{color:var(--danger);font-weight:800}
+.section-head{display:flex;align-items:center;gap:10px;padding:13px 15px;border-bottom:1px solid var(--line);user-select:none}
+.section-head button{border:0;background:transparent;padding:0;display:flex;align-items:center;gap:10px;width:100%;text-align:left}
+.badge{width:32px;height:32px;border-radius:9px;display:grid;place-items:center;font-size:17px;flex:0 0 auto}
+.section-title{font-weight:850;font-size:14px;flex:1}
+.chev{color:var(--muted);transition:transform .2s}
+.section.open .chev{transform:rotate(180deg)}
+.section-body{display:none;padding:15px}
+.section.open .section-body{display:block}
+.range-line{display:flex;align-items:center;gap:12px}
+input[type=range]{appearance:none;-webkit-appearance:none;height:7px;border:0;background:var(--line);padding:0;border-radius:999px}
+input[type=range]::-webkit-slider-thumb{appearance:none;-webkit-appearance:none;width:24px;height:24px;border-radius:50%;background:var(--green);border:3px solid #fff;box-shadow:0 2px 9px rgba(0,0,0,.25)}
+.value{min-width:48px;text-align:right;font-family:ui-monospace,SFMono-Regular,Consolas,monospace;color:var(--green);font-size:18px;font-weight:850}
+.choice-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.choice input{position:absolute;opacity:0;pointer-events:none}
+.choice span,.score button{display:flex;align-items:center;justify-content:center;min-height:42px;border:2px solid var(--line);border-radius:10px;background:#fbfaf7;color:var(--ink);font-size:13px;font-weight:700;text-align:center;padding:8px}
+.choice input:checked+span,.score button.active{background:var(--leaf);border-color:var(--green);color:var(--green)}
+.score{display:grid;grid-template-columns:repeat(5,1fr);gap:7px}
+.score button{font-family:ui-monospace,SFMono-Regular,Consolas,monospace;font-size:16px}
+.alert{background:#fff7df;border:1px solid #f2c94c;border-radius:10px;color:#6f4700;padding:10px 12px;margin-bottom:13px;font-size:13px;font-weight:650}
+.result{background:var(--soil);color:#fff;padding:15px}
+.result h2{color:var(--sun)}
+.result-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.metric{background:rgba(255,255,255,.08);border-radius:11px;padding:12px}
+.metric.wide{grid-column:1/-1}
+.metric-label{font-size:10px;letter-spacing:.07em;text-transform:uppercase;color:rgba(255,255,255,.56);font-weight:800}
+.metric-value{font-family:ui-monospace,SFMono-Regular,Consolas,monospace;color:var(--sun);font-size:23px;font-weight:900;margin-top:4px}
+.metric-unit{font-size:11px;color:rgba(255,255,255,.48)}
+.bar{position:fixed;left:0;right:0;bottom:0;background:#fff;border-top:1px solid var(--line);padding:10px 14px calc(10px + env(safe-area-inset-bottom));display:flex;gap:9px;z-index:30;box-shadow:0 -6px 22px rgba(0,0,0,.09)}
+.bar-inner{max-width:520px;margin:0 auto;width:100%;display:flex;gap:9px}
+.primary,.secondary,.danger-btn{border:0;border-radius:12px;padding:13px 12px;font-weight:850}
+.primary{flex:1;background:var(--green);color:#fff}
+.secondary{background:var(--soft);border:2px solid var(--line);color:var(--soil);min-width:52px}
+.danger-btn{background:#fff1f0;color:var(--danger);border:2px solid #f4b8b0}
+.toast{position:fixed;left:50%;top:82px;transform:translateX(-50%);background:var(--soil);color:#fff;border-radius:999px;padding:11px 16px;font-size:13px;font-weight:750;opacity:0;pointer-events:none;transition:opacity .2s;z-index:50;white-space:nowrap}
+.toast.show{opacity:1}
+.summary{margin-bottom:20px}
+.summary-card{padding:14px}
+.summary-head{display:flex;justify-content:space-between;gap:12px;align-items:flex-start;margin-bottom:12px}
+.summary-title{font-weight:900;color:var(--green)}
+.summary-meta{font-size:12px;color:var(--muted);line-height:1.45}
+.report-title{display:none}
+.comparison-wrap{overflow:auto}
+.rank{display:inline-flex;align-items:center;justify-content:center;min-width:28px;border-radius:999px;background:var(--leaf);color:var(--green);font-weight:900;padding:3px 8px}
+.treatment-photo{width:100%;max-height:240px;object-fit:cover;border-radius:10px;border:1px solid var(--line);margin:8px 0 12px}
+table{width:100%;border-collapse:collapse}
+th,td{padding:9px 6px;border-bottom:1px solid var(--line);font-size:13px;text-align:left}
+th{font-size:10px;text-transform:uppercase;letter-spacing:.07em;color:var(--green);background:var(--leaf)}
+td:last-child{text-align:right;font-family:ui-monospace,SFMono-Regular,Consolas,monospace;font-weight:850}
+.empty{text-align:center;color:var(--muted);padding:38px 18px}
+.no-phase-placeholder{margin:14px;background:var(--paper);border-radius:14px;box-shadow:var(--shadow);padding:28px 20px;text-align:center;color:var(--muted);font-size:14px;line-height:1.6}
+.no-phase-placeholder .icon{font-size:44px;margin-bottom:12px}
+.no-phase-placeholder strong{color:var(--ink);display:block;font-size:16px;margin-bottom:6px}
+.tools{display:flex;gap:8px;margin:0 14px 14px}
+.tools button{flex:1}
+.map-box{min-height:200px;border:2px solid #1a7a2e;border-radius:12px;background:linear-gradient(135deg,#e8f5ed,#f8f6f1);position:relative;overflow:hidden;margin-bottom:12px;display:block}
+.map-poly{position:absolute;inset:8px}
+.map-points{font-family:ui-monospace,SFMono-Regular,Consolas,monospace;font-size:11px;color:var(--muted);line-height:1.5}
+.harvest-result{background:var(--soil);color:#fff;border-radius:12px;padding:13px;margin-top:10px}
+.harvest-result b{display:block;color:var(--sun);font-size:24px;font-family:ui-monospace,SFMono-Regular,Consolas,monospace;margin-top:4px}
+@media(min-width:600px){.bar{padding-left:0;padding-right:0}.shell{padding-bottom:10px}}
+
+/* ── Produtos por tratamento ── */
+.prod-list{display:flex;flex-direction:column;gap:8px;margin-bottom:10px}
+.prod-row{display:grid;grid-template-columns:1fr 90px 70px 32px;gap:6px;align-items:center}
+.prod-row input,.prod-row select{padding:9px 10px;border:1.5px solid var(--line);border-radius:9px;font-size:14px;background:#fafaf8;font-family:inherit;width:100%}
+.prod-row input:focus,.prod-row select:focus{outline:none;border-color:var(--green,#1a7a2e)}
+.prod-del{width:32px;height:32px;border-radius:8px;border:none;background:#fdecea;color:#c0392b;font-size:18px;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.prod-add-btn{width:100%;padding:9px;border:2px dashed var(--line);border-radius:9px;background:transparent;color:var(--muted);font-size:13px;font-weight:500;cursor:pointer;transition:all .2s}
+.prod-add-btn:hover{border-color:var(--green,#1a7a2e);color:var(--green,#1a7a2e)}
+.prod-header{display:grid;grid-template-columns:1fr 90px 70px 32px;gap:6px;font-size:11px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;padding:0 2px;margin-bottom:2px}
+
+/* ── Calendário de avaliações ── */
+.cal-card{margin:14px;background:var(--paper);border-radius:14px;box-shadow:var(--shadow);overflow:hidden}
+.cal-head{padding:13px 16px;background:#1a7a2e;color:#fff;font-family:'Syne',sans-serif;font-weight:800;font-size:14px;display:flex;align-items:center;gap:8px}
+.cal-body{padding:14px 16px;display:flex;flex-direction:column;gap:8px}
+.cal-row{display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:11px;border:1.5px solid var(--line);background:#fafaf8;transition:background .2s}
+.cal-row.today-zone{border-color:#f5c518;background:#fffdf0}
+.cal-row.overdue{border-color:#e74c3c;background:#fff5f5}
+.cal-row.done-phase{border-color:#2ea84a;background:#f0fbf4;opacity:.7}
+.cal-icon{font-size:22px;flex-shrink:0;width:34px;text-align:center}
+.cal-info{flex:1;min-width:0}
+.cal-phase-name{font-weight:600;font-size:14px;color:var(--ink)}
+.cal-date{font-size:12px;color:var(--muted);margin-top:1px}
+.cal-badge{font-family:'DM Mono',monospace;font-size:11px;font-weight:500;padding:3px 8px;border-radius:10px;flex-shrink:0}
+.cal-badge.soon{background:#fff3cd;color:#856404}
+.cal-badge.today{background:#f5c518;color:#3d2b1f}
+.cal-badge.late{background:#fdecea;color:#c0392b}
+.cal-badge.ok{background:#e8f5ec;color:#1a7a2e}
+.cal-badge.future{background:#f0f0f0;color:var(--muted)}
+.sowing-field{display:flex;gap:8px;align-items:center;padding:12px 14px;background:#f2efe8;border-radius:11px;margin-bottom:12px}
+.sowing-field label{font-size:12px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;white-space:nowrap}
+.sowing-field input{flex:1;padding:9px 12px;border:1.5px solid var(--line);border-radius:9px;font-size:15px;font-family:inherit;background:#fff}
+/* ── Estande calculado ── */
+.stand-calc{background:#f2efe8;border-radius:11px;padding:13px;margin-bottom:0}
+.stand-row{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px;align-items:end}
+.stand-row .field{margin-bottom:0}
+.stand-result{display:flex;align-items:center;justify-content:space-between;background:#1a7a2e;border-radius:9px;padding:10px 14px;color:#fff;margin-top:4px}
+.stand-result-label{font-size:11px;text-transform:uppercase;letter-spacing:.5px;opacity:.7;white-space:nowrap}
+/* ── Planting GPS ── */
+.gps-block{background:#f2efe8;border-radius:11px;padding:13px;display:flex;flex-direction:column;gap:10px}
+.gps-point-row{display:flex;align-items:center;gap:10px}
+.gps-point-icon{font-size:22px;flex-shrink:0}
+.gps-point-info{flex:1;min-width:0}
+.gps-point-label{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--muted);margin-bottom:3px}
+.gps-point-val{font-family:'DM Mono',monospace;font-size:12px;color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.gps-point-val.empty{color:var(--muted);font-style:italic;font-family:inherit;font-size:13px}
+.gps-capture-btn{flex-shrink:0;padding:9px 14px;border-radius:9px;border:2px solid var(--green);background:#fff;color:var(--green);font-size:13px;font-weight:700;cursor:pointer;white-space:nowrap}
+.gps-capture-btn.captured{background:var(--green);color:#fff;border-color:var(--green)}
+.gps-divider{height:1px;background:var(--line)}
+
+.stand-result-val{font-family:'DM Mono',monospace;font-size:22px;font-weight:500;color:#f5c518}
+.stand-result-unit{font-size:11px;opacity:.6}
+
+
+@media print{
+  @page{size:A4;margin:12mm}
+  body{background:#fff;color:#111;padding:0}
+  .top,.tabs,.treat-row,.bar,.tools,.toast{display:none!important}
+  .shell{max-width:none;margin:0}
+  .summary{display:block!important;margin:0}
+  .report-title{display:block;margin:0 0 10px;font-size:20px;font-weight:900;color:#111}
+  .summary-card{box-shadow:none;border:1px solid #d9d4ca;margin:0 0 10px;border-radius:8px;break-inside:avoid}
+  .summary-title{color:#111}
+  th{background:#eef5ef!important;color:#111}
+  th,td{font-size:10.5px;padding:6px}
+  .treatment-photo{max-height:55mm}
+}
+</style>
+</head>
+<body>
+<div class="shell">
+  <header class="top">
+    <div class="brand">
+      <div>
+        <h1>Verd<span>ix</span></h1>
+        <div style="font-size:10px;color:rgba(255,255,255,.4);font-family:'DM Mono',monospace;margin-top:1px;letter-spacing:.5px">v1.0</div>
+        <div class="sub" id="headerDate"></div>
+      </div>
+      <div class="pill" id="phasePill" style="display:none">SELECIONE A FASE</div>
+    </div>
+    <div class="nav-row" id="plantNav" style="visibility:hidden"></div>
+    <div class="progress"><span id="progressFill"></span></div>
+  </header>
+
+  <div class="tabs">
+    <button class="tab active" type="button" data-tab="form">Avaliação</button>
+    <button class="tab" type="button" data-tab="summary">Resumo</button>
+  </div>
+
+  <div class="phase-select">
+    <label for="phaseSelect">Fase de avaliação</label>
+    <select id="phaseSelect">
+      <option value="">Selecionar fase</option>
+      <option value="r3">R3 - grão leitoso</option>
+      <option value="planting">Acomp. de Plantio / Aplicação</option>
+      <option value="germination">Germinação / emergência</option>
+      <option value="v3">V3</option>
+      <option value="v8">V8</option>
+      <option value="harvest">Colheita</option>
+    </select>
+  </div>
+
+  <div class="treat-row" id="treatNav"></div>
+  <div class="sample-hint" id="sampleHint" style="display:none"></div>
+  <div class="no-phase-placeholder" id="noPhaseCard">
+    <div class="icon">🌽</div>
+    <strong>Selecione a fase fenológica</strong>
+    Escolha uma fase no seletor acima para que os campos de avaliação sejam exibidos.
+  </div>
+
+  <main class="main" id="formView">
+    <section class="card">
+      <h2>Dados fixos da fazenda</h2>
+      <div class="grid">
+        <div class="field full" data-field="date"><label for="date">Data</label><input type="date" id="date"><div class="err">Informe a data.</div></div>
+        <div class="field" data-field="evaluator"><label for="evaluator">Avaliador</label><input type="text" id="evaluator" autocomplete="name" placeholder="Nome"></div>
+        <div class="field" data-field="plot"><label for="plot">Talhão</label><input type="text" id="plot" placeholder="Ex: T-05"><div class="err">Informe o talhão.</div></div>
+        <div class="field"><label for="farm">Fazenda</label><input type="text" id="farm" placeholder="Nome"></div>
+        <div class="field full"><label for="hybrid">Híbrido</label><input type="text" id="hybrid" placeholder="Ex: DKB 310 PRO3"></div>
+        <div class="field full"><label for="weather">Condição de campo</label><select id="weather"><option value="">Selecionar</option><option>Seco</option><option>Úmido</option><option>Após chuva</option><option>Estresse hídrico</option><option>Vento forte</option></select></div>
+        <div class="field full">
+          <label for="newTreatment">Adicionar tratamento</label>
+          <div class="inline"><input type="text" id="newTreatment" placeholder="Nome do tratamento"><button class="icon-btn" type="button" id="addTreatment" title="Adicionar tratamento">+</button></div>
+        </div>
+        <div class="field full" id="prodField" style="display:none">
+          <label>Produtos do tratamento ativo</label>
+          <div class="prod-header"><span>Produto</span><span>Dose</span><span>Unidade</span><span></span></div>
+          <div class="prod-list" id="prodList"></div>
+          <button class="prod-add-btn" type="button" onclick="addProd()">+ Adicionar produto</button>
+        </div>
+        <div class="field full">
+          <label>Imagem obrigatória da fase atual</label>
+          <div class="photo-box" id="treatmentPhotoBox">
+            <img class="photo-preview" id="treatmentPhotoPreview" alt="Imagem do tratamento">
+            <div class="photo-actions">
+              <label class="file-btn" for="treatmentImage">Inserir imagem<input type="file" id="treatmentImage" accept="image/*" capture="environment"></label>
+              <button class="secondary" type="button" id="removeTreatmentImage">Remover</button>
+            </div>
+            <div class="photo-name" id="treatmentPhotoName">Nenhuma imagem vinculada a esta fase/tratamento.</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    
+    <!-- CALENDÁRIO DE AVALIAÇÕES -->
+    <div class="cal-card" id="calCard" style="display:none">
+      <div class="cal-head">📅 Calendário de Avaliações</div>
+      <div class="cal-body">
+        <div class="sowing-field">
+          <label for="sowingDate">📌 Plantio</label>
+          <input type="date" id="sowingDate" placeholder="Data de plantio" oninput="renderCalendar()">
+        </div>
+        <div id="calRows"></div>
+      </div>
+    </div>
+
+    <div id="r3Panel" class="hidden">
+    <section class="section open" data-section="leaf">
+      <div class="section-head"><button type="button"><span class="badge" style="background:#e8f5ed">F</span><span class="section-title">Sanidade foliar</span><span class="chev">▼</span></button></div>
+      <div class="section-body">
+        <div class="field"><label for="afv">Área foliar verde - AFV (%)</label><div class="range-line"><input type="range" min="0" max="100" value="80" id="afv"><span class="value" id="afvValue">80%</span></div><div class="hint">Folhas F0 ±3 acima/abaixo da espiga.</div></div>
+        <div class="field"><label for="severity">Severidade de doenças (%)</label><div class="range-line"><input type="range" min="0" max="100" value="5" id="severity"><span class="value" id="severityValue">5%</span></div></div>
+        <div class="field"><label for="pathogen">Patógeno identificado</label><select id="pathogen"><option value="">Selecionar</option><option>Cercosporiose (C. zeae-maydis)</option><option>Ferrugem polissora (P. polysora)</option><option>Ferrugem comum (P. sorghi)</option><option>Mancha branca (Phoma sorghina)</option><option>Helmintosporiose (E. turcicum)</option><option>Bipolaris (B. maydis)</option><option>Diplodia (S. maydis)</option><option>Sem doença aparente</option><option>Outro</option></select></div>
+        <div class="field"><label for="greenLeaves">Nº de folhas verdes</label><input type="number" id="greenLeaves" min="0" max="25" step="1" inputmode="numeric" placeholder="Ex: 12"></div>
+      </div>
+    </section>
+
+    <section class="section" data-section="ear">
+      <div class="section-head"><button type="button"><span class="badge" style="background:#fff7df">E</span><span class="section-title">Parâmetros da espiga</span><span class="chev">▼</span></button></div>
+      <div class="section-body">
+        <div class="alert">Confirmar R3: grão com aspecto leitoso ao corte transversal.</div>
+        <div class="grid">
+          <div class="field"><label for="earLength">Comprimento (cm)</label><input type="number" id="earLength" step="0.1" min="0" inputmode="decimal" placeholder="Ex: 18"></div>
+          <div class="field"><label for="earDiameter">Diâmetro (mm)</label><input type="number" id="earDiameter" step="0.1" min="0" inputmode="decimal" placeholder="Ex: 48"></div>
+          <div class="field" data-field="rows"><label for="rows">Nº de fileiras</label><input type="number" id="rows" min="8" max="24" step="1" inputmode="numeric" placeholder="Ex: 16"><div class="err">Informe fileiras entre 8 e 24.</div></div>
+          <div class="field" data-field="kernels"><label for="kernels">Grãos por fileira</label><input type="number" id="kernels" min="10" max="60" step="1" inputmode="numeric" placeholder="Ex: 38"><div class="err">Informe grãos entre 10 e 60.</div></div>
+          <div class="field full"><label for="earHeight">Altura de inserção (cm)</label><input type="number" id="earHeight" min="0" step="1" inputmode="numeric" placeholder="Ex: 90"></div>
+        </div>
+        <div class="field" data-field="r3"><label>R3 confirmado?</label><div class="choice-grid"><label class="choice"><input type="radio" name="r3" value="Sim"><span>Sim - leitoso</span></label><label class="choice"><input type="radio" name="r3" value="Não"><span>Não confirmado</span></label></div><div class="err">Confirme o estádio R3.</div></div>
+      </div>
+    </section>
+
+    <section class="section" data-section="plant">
+      <div class="section-head"><button type="button"><span class="badge" style="background:#edf2ff">P</span><span class="section-title">Parâmetros da planta</span><span class="chev">▼</span></button></div>
+      <div class="section-body">
+        <div class="grid">
+          <div class="field"><label for="plantHeight">Altura da planta (cm)</label><input type="number" id="plantHeight" min="0" step="1" inputmode="numeric" placeholder="Ex: 220"></div>
+          <div class="field"><label for="stemDiameter">Diâmetro do colmo (mm)</label><input type="number" id="stemDiameter" min="0" step="0.1" inputmode="decimal" placeholder="Ex: 22"><div class="hint">Paquímetro no 3º entrenó.</div></div>
+        </div>
+        <div class="field"><label>Stay green</label><div class="choice-grid"><label class="choice"><input type="radio" name="stayGreen" value="Excelente"><span>Excelente</span></label><label class="choice"><input type="radio" name="stayGreen" value="Bom"><span>Bom</span></label><label class="choice"><input type="radio" name="stayGreen" value="Regular"><span>Regular</span></label><label class="choice"><input type="radio" name="stayGreen" value="Ruim"><span>Ruim</span></label></div></div>
+      </div>
+    </section>
+
+    <section class="section" data-section="stem">
+      <div class="section-head"><button type="button"><span class="badge" style="background:#fff1f0">C</span><span class="section-title">Colmo</span><span class="chev">▼</span></button></div>
+      <div class="section-body">
+        <div class="field"><label>Teste do canivete</label><div class="choice-grid"><label class="choice"><input type="radio" name="knife" value="Firme"><span>Firme</span></label><label class="choice"><input type="radio" name="knife" value="Mole/Oco"><span>Mole/Oco</span></label></div></div>
+        <div class="field"><label for="rot">Podridão de colmo (%)</label><div class="range-line"><input type="range" min="0" max="100" value="0" id="rot"><span class="value" id="rotValue">0%</span></div></div>
+      </div>
+    </section>
+
+    <section class="section" data-section="notes">
+      <div class="section-head"><button type="button"><span class="badge" style="background:#e8f0fe">O</span><span class="section-title">Observações</span><span class="chev">▼</span></button></div>
+      <div class="section-body">
+        <div class="field"><label for="notes">Observações gerais</label><textarea id="notes" placeholder="Condições de campo, anomalias, fitotoxidez, plantas acamadas..."></textarea></div>
+      </div>
+    </section>
+
+    <section class="result">
+      <h2>Índices calculados</h2>
+      <div class="result-grid">
+        <div class="metric"><div class="metric-label">Grãos pot./espiga</div><div class="metric-value" id="grainPotential">-</div><div class="metric-unit">grãos</div></div>
+        <div class="metric"><div class="metric-label">Índice san. foliar</div><div class="metric-value" id="isf">-</div><div class="metric-unit">ISF 0-100</div></div>
+        <div class="metric wide"><div class="metric-label">Nota integrada do tratamento</div><div class="metric-value" id="nit">-</div><div class="metric-unit">ISF 35%, grãos 40%, colmo 25%</div></div>
+      </div>
+    </section>
+    </div>
+
+    <div class="phase-panel hidden" id="otherPhasePanel">
+      <section class="card">
+        <h2 id="phaseTitle">Avaliação</h2>
+        <div id="phaseFields"></div>
+        <div class="harvest-result hidden" id="harvestResult">
+          Produtividade estimada
+          <b id="harvestYield">-</b>
+          <div class="metric-unit">sacas/ha considerando 60 kg/saca</div>
+        </div>
+      </section>
+      <section class="section hidden" id="mapSection">
+        <div class="section-head"><button type="button"><span class="badge" style="background:#e8f5ed">M</span><span class="section-title">Perímetro da área</span><span class="chev">▼</span></button></div>
+        <div class="section-body">
+          <div class="map-box"><svg class="map-poly" id="mapSvg" viewBox="0 0 100 100" preserveAspectRatio="none"></svg></div>
+          <div class="inline" style="margin-bottom:8px">
+            <button class="secondary" type="button" id="addMapPoint">📍 Adicionar ponto GPS</button>
+            <button class="secondary" type="button" id="clearMapPoints">🗑 Limpar pontos</button>
+          </div>
+          <div class="map-points" id="mapPoints">Nenhum ponto registrado.</div>
+          <div class="hint">Registre os pontos caminhando ao redor da área colhida. Com 3 ou mais pontos, o app calcula a área automaticamente.</div>
+        </div>
+      </section>
+    </div>
+  </main>
+
+  <section class="summary hidden" id="summaryView">
+    <div class="tools">
+      <button class="secondary" type="button" id="printPdf">Relatório PDF</button>
+      <button class="secondary" type="button" id="copyJson">Backup JSON</button>
+      <button class="danger-btn" type="button" id="clearData">Limpar ensaio</button>
+    </div>
+    <div id="summaryContent"></div>
+  </section>
+</div>
+
+<div class="bar">
+  <div class="bar-inner" style="visibility:hidden">
+    <button class="primary" type="button" id="savePlant">Salvar avaliação</button>
+    <button class="secondary" type="button" id="exportCsv" title="Exportar CSV">CSV</button>
+    <button class="secondary" type="button" id="printPdfBottom" title="Gerar relatório em PDF">PDF</button>
+    <button class="secondary" type="button" id="geoBtn" title="Registrar GPS">GPS</button>
+  </div>
+</div>
+<div class="toast" id="toast"></div>
+
+<script>
+const STORAGE_KEY = "verdix-v1";
+const TARGET_PLANTS = 10;
+const ids = ["date","evaluator","plot","farm","hybrid","weather","afv","severity","pathogen","greenLeaves","earLength","earDiameter","rows","kernels","earHeight","plantHeight","stemDiameter","rot","notes"];
+const phaseLabels = {
+  r3: "R3 - grão leitoso",
+  planting: "Acomp. de Plantio / Aplicação",
+  germination: "Germinação / emergência",
+  v3: "V3",
+  v8: "V8",
+  harvest: "Colheita"
+};
+const phaseSchemas = {
+  planting: [
+    {id:"applicationMethod", label:"Forma de Aplicação", type:"select", options:["","Tratamento de semente (TS)","Sulco de plantio","Aplicação foliar","TS + Sulco de plantio","TS + Aplicação foliar","Sulco + Aplicação foliar"]},
+    {id:"applicationRate", label:"Volume de calda aplicado", type:"number", step:"0.01", suffix:"L/ha ou mL/100kg", placeholder:"Ex: 200"},
+    {id:"applicationTime", label:"Horário de aplicação", type:"select", options:["","Manhã (06h–10h)","Meio do dia (10h–14h)","Tarde (14h–18h)","Noturno"]},
+    {id:"equipmentType", label:"Equipamento / método", type:"select", options:["","Tratadora industrial","Betoneira","Pulverizador costal","Pulverizador tratorizado","Pulverizador autopropelido","Plantadeira (aplicação em sulco)","Manual"]},
+    {id:"applicationNotes", label:"Observações da aplicação", type:"textarea"},
+    {id:"__plantingGps", label:"__plantingGps", type:"__custom"}
+  ],
+  germination: [
+    {id:"__standCalc", label:"__standCalc", type:"__custom"},
+    {id:"uniformity", label:"Uniformidade de emergência", type:"select", options:["","Alta","Média","Baixa"]},
+    {id:"gaps", label:"Falhas na linha", type:"select", options:["","Ausentes","Poucas","Moderadas","Muitas"]},
+    {id:"seedlingRoot", label:"Raiz/plântula", type:"select", options:["","Normal","Curta","Escurecida","Torta","Com lesão","Semente apodrecida"]},
+    {id:"seedlingVigor", label:"Vigor inicial", type:"select", options:["","Alto","Médio","Baixo"]},
+    {id:"phaseNotes", label:"Observações", type:"textarea"}
+  ],
+  v3: [
+    {id:"rootVigor", label:"Raiz", type:"select", options:["","Boa emissão nodal","Pouca raiz","Raiz escurecida","Raiz torta/compactação","Lesão por praga"]},
+    {id:"plantVigor", label:"Vigor da planta", type:"select", options:["","Alto","Médio","Baixo"]},
+    {id:"nutrientSymptom", label:"Deficiência nutricional provável", type:"select", options:["","Sem sintoma","Nitrogênio","Fósforo","Potássio","Enxofre","Zinco","Magnésio","Outro"]},
+    {id:"nutrientSeverity", label:"Severidade deficiência (%)", type:"number", step:"1"},
+    {id:"affectedLeaves", label:"Folhas afetadas", type:"select", options:["","Mais velhas","Mais novas","Toda planta"]},
+    {id:"phaseNotes", label:"Observações", type:"textarea"}
+  ],
+  v8: [
+    {id:"rootCondition", label:"Raiz", type:"select", options:["","Boa","Restrita","Escurecida","Lesionada","Sintoma de compactação"]},
+    {id:"afvV8", label:"Área foliar verde (%)", type:"number", step:"1"},
+    {id:"foliarSeverity", label:"Severidade foliar (%)", type:"number", step:"1"},
+    {id:"foliarPathogen", label:"Patógeno/sintoma", type:"select", options:["","Sem doença aparente","Cercosporiose","Bipolaris","Ferrugem","Mancha branca","Helmintosporiose","Outro"]},
+    {id:"nutritionV8", label:"Deficiência nutricional", type:"select", options:["","Sem sintoma","Nitrogênio","Fósforo","Potássio","Enxofre","Zinco","Magnésio","Outro"]},
+    {id:"phaseNotes", label:"Observações", type:"textarea"}
+  ],
+  harvest: [
+    {id:"harvestArea", label:"Área colhida", type:"number", step:"0.0001", suffix:"ha", placeholder:"Ex: 2.5000", hint:"Preencha ou use o GPS para calcular."},
+    {id:"harvestWeight", label:"Peso colhido", type:"number", step:"0.01", suffix:"kg", placeholder:"Ex: 15000"},
+    {id:"grainMoisture", label:"Umidade do grão", type:"number", step:"0.1", suffix:"%", placeholder:"Ex: 13.5"},
+    {id:"correctedWeight", label:"Peso corrigido", type:"number", step:"0.01", suffix:"kg", hint:"Opcional — se vazio usa peso colhido."},
+    {id:"finalStand", label:"Estande final", type:"number", step:"1", suffix:"plantas/ha", placeholder:"Ex: 65000"},
+    {id:"harvestNotes", label:"Observações de colheita", type:"textarea"}
+  ]
+};
+let state = {
+  meta: {},
+  treatments: ["Testemunha","Tratamento 1"],
+  treatmentImages: {},
+  treatmentProducts: {},   // { tratIndex: [{name, dose, unit},...] }
+  sowingDate: "",
+  phase: "",
+  phaseData: {},
+  harvestMaps: {},
+  plantingGps: {},   // { tratIndex: { start: {lat,lon,acc}, end: {lat,lon,acc} } }
+  currentTreatment: 0,
+  currentPlant: 0,
+  geo: null,
+  data: {}
+};
+
+const $ = (q, root=document) => root.querySelector(q);
+const $$ = (q, root=document) => Array.from(root.querySelectorAll(q));
+const num = v => v === "" || v === null || v === undefined ? null : Number(String(v).replace(",", "."));
+const todayISO = () => new Date().toISOString().slice(0,10);
+
+function boot(){
+  loadState();
+  if(!state.meta.date) state.meta.date = todayISO();
+  $("#headerDate").textContent = new Date().toLocaleDateString("pt-BR",{weekday:"short",day:"2-digit",month:"long"});
+  bindEvents();
+  loadMeta();
+  $("#phaseSelect").value = state.phase || "";
+  renderTreatments();
+  renderPlants();
+  renderPhase();
+  renderTreatmentImage();
+  loadPlant();
+  calculate();
+  updateProgress();
+  if(state.sowingDate){ const sw=$("#sowingDate"); if(sw) sw.value=state.sowingDate; }
+  renderCalendar();
+  if(state.phase){ const pf=$("#prodField"); if(pf) pf.style.display=""; renderProdList(); }
+}
+
+function bindEvents(){
+  $$(".tab").forEach(btn => btn.addEventListener("click", () => switchTab(btn.dataset.tab)));
+  $$(".section-head button").forEach(btn => btn.addEventListener("click", () => btn.closest(".section").classList.toggle("open")));
+  $("#addTreatment").addEventListener("click", addTreatment);
+  $("#newTreatment").addEventListener("keydown", e => { if(e.key === "Enter") addTreatment(); });
+  $("#savePlant").addEventListener("click", savePlant);
+  $("#exportCsv").addEventListener("click", exportCsv);
+  $("#printPdf").addEventListener("click", printReport);
+  $("#printPdfBottom").addEventListener("click", printReport);
+  $("#geoBtn").addEventListener("click", captureGeo);
+  $("#treatmentImage").addEventListener("change", handleTreatmentImage);
+  $("#removeTreatmentImage").addEventListener("click", removeTreatmentImage);
+  $("#copyJson").addEventListener("click", copyBackup);
+  $("#clearData").addEventListener("click", clearAll);
+  $("#phaseSelect").addEventListener("change", () => {
+    saveDraft();
+    state.phase = $("#phaseSelect").value;
+    persist();
+    renderPhase();
+    renderTreatments();
+    renderPlants();
+    renderTreatmentImage();
+    loadPlant();
+    calculate();
+  });
+  $("#addMapPoint").addEventListener("click", addMapPoint);
+  $("#clearMapPoints").addEventListener("click", clearMapPoints);
+  ids.forEach(id => {
+    const el = $("#" + id);
+    if(el) el.addEventListener("input", () => { syncRanges(); saveDraft(); calculate(); });
+    if(el) el.addEventListener("change", () => { saveDraft(); calculate(); });
+  });
+  $$("input[type=radio]").forEach(el => el.addEventListener("change", () => { saveDraft(); calculate(); }));
+}
+
+function loadState(){
+  try{
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if(raw) state = {...state, ...JSON.parse(raw)};
+  }catch(e){
+    toast("Não consegui carregar o salvamento local.");
+  }
+}
+
+function persist(){
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+}
+
+function collectMeta(){
+  state.meta = {
+    date: $("#date").value,
+    evaluator: $("#evaluator").value.trim(),
+    plot: $("#plot").value.trim(),
+    farm: $("#farm").value.trim(),
+    hybrid: $("#hybrid").value.trim(),
+    weather: $("#weather").value
+  };
+}
+
+function loadMeta(){
+  $("#date").value = state.meta.date || todayISO();
+  $("#evaluator").value = state.meta.evaluator || "";
+  $("#plot").value = state.meta.plot || "";
+  $("#farm").value = state.meta.farm || "";
+  $("#hybrid").value = state.meta.hybrid || "";
+  $("#weather").value = state.meta.weather || "";
+}
+
+function collectPlant(){
+  const plant = {};
+  ids.forEach(id => {
+    if(["date","evaluator","plot","farm","hybrid","weather"].includes(id)) return;
+    const el = $("#" + id);
+    plant[id] = el ? el.value : "";
+  });
+  ["r3","stayGreen","knife"].forEach(name => {
+    const checked = $(`input[name="${name}"]:checked`);
+    plant[name] = checked ? checked.value : "";
+  });
+  plant.savedAt = new Date().toISOString();
+  plant.geo = state.geo || null;
+  return plant;
+}
+
+function saveDraft(){
+  collectMeta();
+  if(!state.phase){
+    persist();
+    return;
+  }
+  if(state.phase === "r3"){
+    if(!state.data[state.currentTreatment]) state.data[state.currentTreatment] = {};
+    state.data[state.currentTreatment][state.currentPlant] = collectPlant();
+  }else{
+    if(!state.phaseData[state.phase]) state.phaseData[state.phase] = {};
+    if(!state.phaseData[state.phase][state.currentTreatment]) state.phaseData[state.phase][state.currentTreatment] = {};
+    state.phaseData[state.phase][state.currentTreatment][state.currentPlant] = collectPhaseEntry();
+  }
+  persist();
+  updateProgress();
+}
+
+function savePlant(){
+  if(!state.phase){
+    toast("Selecione a fase fenológica antes de salvar.");
+    return;
+  }
+  saveDraft();
+  const ok = (state.phase === "r3" ? validatePlant() : validatePhaseEntry()) && validatePhaseImage();
+  renderPlants();
+  if(ok) toast(`Avaliação ${state.currentPlant + 1} salva em ${state.treatments[state.currentTreatment]}.`);
+  else toast("Salvei rascunho, mas há campos obrigatórios pendentes.");
+}
+
+function getCurrentPlant(){
+  if(!state.phase) return null;
+  if(state.phase === "r3") return (state.data[state.currentTreatment] || {})[state.currentPlant] || null;
+  return (state.phaseData[state.phase]?.[state.currentTreatment] || {})[state.currentPlant] || null;
+}
+
+function loadPlant(){
+  clearForm(false);
+  const plant = getCurrentPlant();
+  if(state.phase !== "r3"){
+    loadPhaseEntry(plant);
+    return;
+  }
+  if(plant){
+    ids.forEach(id => {
+      if(["date","evaluator","plot","farm","hybrid","weather"].includes(id)) return;
+      const el = $("#" + id);
+      if(el) el.value = plant[id] ?? "";
+    });
+    ["r3","stayGreen","knife"].forEach(name => {
+      const val = plant[name];
+      if(val){
+        const el = $(`input[name="${name}"][value="${cssEscape(val)}"]`);
+        if(el) el.checked = true;
+      }
+    });
+    state.geo = plant.geo || state.geo || null;
+  }
+  syncRanges();
+  clearValidation();
+}
+
+function clearForm(resetDefaults=true){
+  ids.forEach(id => {
+    if(["date","evaluator","plot","farm","hybrid","weather"].includes(id)) return;
+    const el = $("#" + id);
+    if(!el) return;
+    if(el.type === "range"){
+      if(id === "afv") el.value = resetDefaults ? 80 : el.defaultValue;
+      else if(id === "severity") el.value = resetDefaults ? 5 : el.defaultValue;
+      else if(id === "rot") el.value = 0;
+    }else{
+      el.value = "";
+    }
+  });
+  $$("input[type=radio]").forEach(el => el.checked = false);
+  syncRanges();
+}
+
+function addTreatment(){
+  const input = $("#newTreatment");
+  const name = input.value.trim();
+  if(!name) return;
+  if(state.treatments.some(t => t.toLowerCase() === name.toLowerCase())){
+    toast("Esse tratamento já existe.");
+    return;
+  }
+  saveDraft();
+  state.treatments.push(name);
+  state.currentTreatment = state.treatments.length - 1;
+  state.currentPlant = 0;
+  input.value = "";
+  persist();
+  renderTreatments();
+  renderPlants();
+  renderPhase();
+  renderTreatmentImage();
+  clearForm();
+  calculate();
+  state.treatmentProducts[state.currentTreatment] = state.treatmentProducts[state.currentTreatment] || [];
+  renderProdList();
+  toast("Tratamento adicionado.");
+}
+
+function renderTreatments(){
+  const nav = $("#treatNav");
+  nav.textContent = "";
+  state.treatments.forEach((t, i) => {
+    const btn = document.createElement("button");
+    btn.type = "button";
+    btn.className = "treat-btn" + (i === state.currentTreatment ? " active" : "");
+    btn.textContent = t;
+    btn.addEventListener("click", () => {
+      saveDraft();
+      saveProdList();
+      state.currentTreatment = i;
+      state.currentPlant = 0;
+      persist();
+      renderTreatments();
+      renderPlants();
+      renderTreatmentImage();
+      renderProdList();
+      loadPlant();
+      calculate();
+      if(state.phase === "planting") setTimeout(() => renderPlantingGpsBlock(), 50);
+    });
+    nav.appendChild(btn);
+  });
+}
+
+function renderPlants(){
+  const nav = $("#plantNav");
+  nav.textContent = "";
+  if(!state.phase) return;
+  const treatmentData = state.phase === "r3" ? (state.data[state.currentTreatment] || {}) : (state.phaseData[state.phase]?.[state.currentTreatment] || {});
+  const maxExisting = Object.keys(treatmentData).reduce((m, key) => Math.max(m, Number(key) + 1), 0);
+  const total = Math.max(maxExisting, state.currentPlant + 1, 1);
+  for(let i=0;i<total;i++){
+    const btn = document.createElement("button");
+    btn.type = "button";
+    btn.className = "plant-btn" + (i === state.currentPlant ? " active" : "") + (treatmentData[i] && i !== state.currentPlant ? " done" : "");
+    btn.textContent = `P${i+1}`;
+    btn.addEventListener("click", () => {
+      saveDraft();
+      state.currentPlant = i;
+      persist();
+      renderPlants();
+      loadPlant();
+      calculate();
+    });
+    nav.appendChild(btn);
+  }
+  const add = document.createElement("button");
+  add.type = "button";
+  add.className = "add-btn";
+  add.textContent = "+";
+    add.addEventListener("click", () => {
+    saveDraft();
+    const current = state.phase === "r3" ? (state.data[state.currentTreatment] || {}) : (state.phaseData[state.phase]?.[state.currentTreatment] || {});
+    state.currentPlant = Object.keys(current).length;
+    state.geo = null;
+    persist();
+    clearForm();
+    if(state.phase !== "r3") loadPhaseEntry(null);
+    renderPlants();
+    calculate();
+  });
+  nav.appendChild(add);
+}
+
+function renderPhase(){
+  const noPhaseCard = $("#noPhaseCard");
+  const sampleHint  = $("#sampleHint");
+  const barInner    = $(".bar-inner");
+  const plantNav    = $("#plantNav");
+
+  if(!state.phase){
+    $(".pill").textContent = "SELECIONE A FASE";
+    $(".pill").style.display = "none";
+    $("#r3Panel").classList.add("hidden");
+    $("#otherPhasePanel").classList.add("hidden");
+    $("#mapSection").classList.add("hidden");
+    if(noPhaseCard) noPhaseCard.style.display = "block";
+    if(sampleHint)  sampleHint.style.display  = "none";
+    if(barInner)    barInner.style.visibility  = "hidden";
+    if(plantNav)    plantNav.style.visibility  = "hidden";
+    clearValidation();
+    return;
+  }
+  // fase selecionada
+  if(noPhaseCard) noPhaseCard.style.display = "none";
+  if(sampleHint)  sampleHint.style.display  = "block";
+  if(barInner)    barInner.style.visibility  = "visible";
+  if(plantNav)    plantNav.style.visibility  = "visible";
+  const pf = $("#prodField");
+  if(pf) pf.style.display = "";
+  const cc = $("#calCard");
+  if(cc) cc.style.display = "";
+  renderCalendar();
+  renderProdList();
+
+  const isR3 = state.phase === "r3";
+  $(".pill").style.display = "";
+  $(".pill").textContent = isR3 ? "FASE R3" : phaseLabels[state.phase].toUpperCase();
+  $("#r3Panel").classList.toggle("hidden", !isR3);
+  $("#otherPhasePanel").classList.toggle("hidden", isR3);
+  $("#mapSection").classList.toggle("hidden", state.phase !== "harvest");
+  if(state.phase === "harvest"){
+    const ms = $("#mapSection");
+    if(ms) ms.classList.add("open");
+  }
+  sampleHint.textContent = isR3
+    ? "Para cada tratamento, salve a planta atual e toque em + na barra P1, P2... para incluir outra planta/espiga na média."
+    : state.phase === "harvest"
+      ? "Para cada tratamento, registre a área colhida, peso colhido e, se quiser, caminhe o perímetro da área com GPS."
+      : "Para cada tratamento, salve uma avaliação e toque em + para incluir mais pontos amostrais na média.";
+  if(isR3) return;
+  $("#phaseTitle").textContent = phaseLabels[state.phase];
+  const wrap = $("#phaseFields");
+  wrap.textContent = "";
+  wrap.style.display = "flex";
+  wrap.style.flexDirection = "column";
+  wrap.style.gap = "0";
+  phaseSchemas[state.phase].forEach(field => wrap.appendChild(createPhaseField(field)));
+  $$("#phaseFields input, #phaseFields select, #phaseFields textarea").forEach(el => {
+    el.addEventListener("input", () => { saveDraft(); calculatePhase(); });
+    el.addEventListener("change", () => { saveDraft(); calculatePhase(); });
+  });
+  loadPhaseEntry(getCurrentPlant());
+}
+
+
+
+// ═══════════════════════════════════════
+// PLANTING GPS (início / fim de aplicação)
+// ═══════════════════════════════════════
+function getPlantingGps(){
+  if(!state.plantingGps) state.plantingGps = {};
+  return state.plantingGps[String(state.currentTreatment)] || {start:null, end:null};
+}
+function setPlantingGps(obj){
+  if(!state.plantingGps) state.plantingGps = {};
+  state.plantingGps[String(state.currentTreatment)] = obj;
+  persist();
+}
+
+function capturePlantingPoint(type){
+  if(!navigator.geolocation){
+    toast("GPS não disponível neste navegador."); return;
+  }
+  const btn = $("#gps-btn-" + type);
+  if(btn){ btn.textContent = "⏳ Aguardando..."; btn.disabled = true; }
+  navigator.geolocation.getCurrentPosition(pos => {
+    const pt = {
+      lat: Number(pos.coords.latitude.toFixed(7)),
+      lon: Number(pos.coords.longitude.toFixed(7)),
+      acc: Math.round(pos.coords.accuracy),
+      time: new Date().toLocaleTimeString("pt-BR", {hour:"2-digit", minute:"2-digit"})
+    };
+    const gps = getPlantingGps();
+    gps[type] = pt;
+    setPlantingGps(gps);
+    renderPlantingGpsBlock();
+    saveDraft();
+    toast(`Ponto de ${type === "start" ? "início" : "fim"} registrado (±${pt.acc}m).`);
+  }, () => {
+    if(btn){ btn.textContent = type === "start" ? "📍 Registrar" : "🏁 Registrar"; btn.disabled = false; }
+    toast("Não consegui acessar o GPS.");
+  }, {enableHighAccuracy:true, timeout:15000, maximumAge:0});
+}
+
+function renderPlantingGpsBlock(){
+  const block = $("#plantingGpsBlock");
+  if(!block) return;
+  const gps = getPlantingGps();
+
+  const fmtPt = pt => pt
+    ? `${pt.lat}, ${pt.lon} &nbsp;·&nbsp; ±${pt.acc}m &nbsp;·&nbsp; ${pt.time}`
+    : null;
+
+  const startVal = fmtPt(gps.start);
+  const endVal   = fmtPt(gps.end);
+
+  block.innerHTML = `
+    <div class="gps-point-row">
+      <div class="gps-point-icon">🟢</div>
+      <div class="gps-point-info">
+        <div class="gps-point-label">Ponto de Início</div>
+        <div class="gps-point-val ${startVal ? "" : "empty"}">${startVal ? startVal : "Não registrado"}</div>
+      </div>
+      <button id="gps-btn-start" class="gps-capture-btn ${gps.start ? "captured" : ""}"
+        onclick="capturePlantingPoint('start')">
+        ${gps.start ? "✅ Atualizar" : "📍 Registrar"}
+      </button>
+    </div>
+    <div class="gps-divider"></div>
+    <div class="gps-point-row">
+      <div class="gps-point-icon">🔴</div>
+      <div class="gps-point-info">
+        <div class="gps-point-label">Ponto de Fim</div>
+        <div class="gps-point-val ${endVal ? "" : "empty"}">${endVal ? endVal : "Não registrado"}</div>
+      </div>
+      <button id="gps-btn-end" class="gps-capture-btn ${gps.end ? "captured" : ""}"
+        onclick="capturePlantingPoint('end')">
+        ${gps.end ? "✅ Atualizar" : "🏁 Registrar"}
+      </button>
+    </div>`;
+}
+
+function buildPlantingGpsBlock(){
+  const wrap = document.createElement("div");
+  wrap.className = "field";
+  wrap.dataset.phaseField = "__plantingGps";
+  const lbl = document.createElement("label");
+  lbl.textContent = "Pontos GPS da Aplicação";
+  wrap.appendChild(lbl);
+  const block = document.createElement("div");
+  block.className = "gps-block";
+  block.id = "plantingGpsBlock";
+  wrap.appendChild(block);
+  // render after appending (needs DOM)
+  setTimeout(() => renderPlantingGpsBlock(), 0);
+  return wrap;
+}
+
+function buildStandCalcBlock(){
+  const wrap = document.createElement("div");
+  wrap.className = "field full";
+  wrap.dataset.phaseField = "__standCalc";
+  wrap.innerHTML = `
+    <label>População de Plantas</label>
+    <div class="stand-calc">
+      <div class="stand-row">
+        <div class="field" style="margin-bottom:0">
+          <label for="standMetro">Plantas/metro</label>
+          <input type="number" id="standMetro" step="0.1" inputmode="decimal" placeholder="Ex: 5.5" oninput="calcStand()">
+        </div>
+        <div class="field" style="margin-bottom:0">
+          <label for="standSpacing">Espaçamento</label>
+          <select id="standSpacing" onchange="calcStand()">
+            <option value="">cm</option>
+            <option value="0.50">50 cm</option>
+            <option value="0.55">55 cm</option>
+            <option value="0.60">60 cm</option>
+            <option value="0.90">90 cm</option>
+          </select>
+        </div>
+      </div>
+      <div class="stand-result">
+        <div>
+          <div class="stand-result-label">População estimada</div>
+          <div class="stand-result-unit">plantas / hectare</div>
+        </div>
+        <div class="stand-result-val" id="standResult">—</div>
+      </div>
+      <input type="hidden" id="standPopulation" data-phase-input="standPopulation">
+    </div>`;
+  return wrap;
+}
+
+function calcStand(){
+  const pm = parseFloat($("#standMetro")?.value);
+  const sp = parseFloat($("#standSpacing")?.value);
+  const resEl = $("#standResult");
+  const hidEl = $("#standPopulation");
+  if(!isNaN(pm) && pm > 0 && !isNaN(sp) && sp > 0){
+    const pop = Math.round(pm / sp * 10000);
+    if(resEl) resEl.textContent = pop.toLocaleString("pt-BR");
+    if(hidEl){ hidEl.value = pop; saveDraft(); }
+  } else {
+    if(resEl) resEl.textContent = "—";
+    if(hidEl) hidEl.value = "";
+  }
+}
+
+function createPhaseField(field){
+  if(field.type === "__custom" && field.id === "__standCalc"){
+    return buildStandCalcBlock();
+  }
+  if(field.type === "__custom" && field.id === "__plantingGps"){
+    return buildPlantingGpsBlock();
+  }
+  const box = document.createElement("div");
+  box.className = "field";
+  box.dataset.phaseField = field.id;
+  const label = document.createElement("label");
+  label.htmlFor = field.id;
+  label.textContent = field.label;
+  box.appendChild(label);
+  let el;
+  if(field.type === "select"){
+    el = document.createElement("select");
+    field.options.forEach(opt => {
+      const option = document.createElement("option");
+      option.value = opt;
+      option.textContent = opt || "Selecionar";
+      el.appendChild(option);
+    });
+  }else if(field.type === "textarea"){
+    el = document.createElement("textarea");
+  }else{
+    el = document.createElement("input");
+    el.type = field.type;
+    el.step = field.step || "1";
+    el.inputMode = field.step && String(field.step).includes(".") ? "decimal" : "numeric";
+    if(field.placeholder) el.placeholder = field.placeholder;
+  }
+  el.id = field.id;
+  el.dataset.phaseInput = field.id;
+  box.appendChild(el);
+  if(field.suffix || field.hint){
+    const hint = document.createElement("div");
+    hint.className = "hint";
+    hint.textContent = [field.suffix, field.hint].filter(Boolean).join(" · ");
+    box.appendChild(hint);
+  }
+  const err = document.createElement("div");
+  err.className = "err";
+  err.textContent = "Campo obrigatório.";
+  box.appendChild(err);
+  return box;
+}
+
+function collectPhaseEntry(){
+  const entry = {};
+  (phaseSchemas[state.phase] || []).forEach(field => {
+    if(field.id === "__standCalc"){
+      const sm = $("#standMetro"); if(sm) entry.standMetro = sm.value;
+      const ss = $("#standSpacing"); if(ss) entry.standSpacing = ss.value;
+      const sp = $("#standPopulation"); if(sp) entry.standPopulation = sp.value;
+      return;
+    }
+    if(field.id === "__plantingGps"){
+      const gps = getPlantingGps();
+      entry.gpsStart = gps.start ? `${gps.start.lat},${gps.start.lon}` : "";
+      entry.gpsEnd   = gps.end   ? `${gps.end.lat},${gps.end.lon}`   : "";
+      return;
+    }
+    const el = $(`[data-phase-input="${field.id}"]`);
+    entry[field.id] = el ? el.value : "";
+  });
+  if(state.phase === "harvest"){
+    entry.mapPoints = getHarvestPoints();
+    const area = polygonAreaHa(entry.mapPoints);
+    if(area && !entry.harvestArea) entry.harvestArea = area.toFixed(4);
+    entry.productivity = harvestProductivity(entry);
+  }
+  entry.savedAt = new Date().toISOString();
+  return entry;
+}
+
+function loadPhaseEntry(entry){
+  (phaseSchemas[state.phase] || []).forEach(field => {
+    const el = $(`[data-phase-input="${field.id}"]`);
+    if(el) el.value = entry?.[field.id] ?? "";
+  });
+  if(state.phase === "harvest") {
+    renderMap();
+    calculatePhase();
+  }else{
+    $("#harvestResult").classList.add("hidden");
+  }
+  clearValidation();
+}
+
+function validatePhaseEntry(){
+  clearValidation();
+  if(state.phase === "harvest"){
+    const entry = collectPhaseEntry();
+    const ok = num(entry.harvestArea) > 0 && num(entry.harvestWeight) > 0;
+    ["harvestArea","harvestWeight"].forEach(id => {
+      const wrap = $(`[data-phase-field="${id}"]`);
+      if(wrap && !(num(entry[id]) > 0)) wrap.classList.add("invalid");
+    });
+    return ok;
+  }
+  return true;
+}
+
+function validatePhaseImage(){
+  const ok = !!state.treatmentImages?.[imageKey()];
+  const box = $("#treatmentPhotoBox");
+  if(box) box.classList.toggle("invalid", !ok);
+  return ok;
+}
+
+function calculatePhase(){
+  if(!state.phase) return;
+  if(state.phase !== "harvest") return;
+  const entry = collectPhaseEntry();
+  const prod = harvestProductivity(entry);
+  $("#harvestResult").classList.toggle("hidden", prod === null);
+  $("#harvestYield").textContent = prod === null ? "-" : `${prod.toFixed(1)} sc/ha`;
+}
+
+function harvestProductivity(entry){
+  const area = num(entry.harvestArea);
+  const weight = num(entry.correctedWeight) || num(entry.harvestWeight);
+  if(!(area > 0) || !(weight > 0)) return null;
+  return weight / 60 / area;
+}
+
+async function handleTreatmentImage(event){
+  const file = event.target.files && event.target.files[0];
+  if(!file) return;
+  if(!file.type.startsWith("image/")){
+    toast("Selecione um arquivo de imagem.");
+    return;
+  }
+  try{
+    const image = await compressImage(file, 1200, .78);
+    if(!state.treatmentImages) state.treatmentImages = {};
+    state.treatmentImages[imageKey()] = {
+      name: file.name,
+      dataUrl: image,
+      savedAt: new Date().toISOString()
+    };
+    persist();
+    renderTreatmentImage();
+    toast("Imagem vinculada ao tratamento.");
+  }catch(e){
+    toast("Não consegui processar a imagem.");
+  }finally{
+    event.target.value = "";
+  }
+}
+
+function removeTreatmentImage(){
+  if(!state.treatmentImages) state.treatmentImages = {};
+  delete state.treatmentImages[imageKey()];
+  persist();
+  renderTreatmentImage();
+  toast("Imagem removida do tratamento.");
+}
+
+function renderTreatmentImage(){
+  const box = $("#treatmentPhotoBox");
+  const preview = $("#treatmentPhotoPreview");
+  const label = $("#treatmentPhotoName");
+  const image = state.treatmentImages?.[imageKey()];
+  if(!box || !preview || !label) return;
+  box.classList.toggle("has-photo", !!image);
+  preview.src = image?.dataUrl || "";
+  label.textContent = image ? `Imagem vinculada: ${image.name || "fase/tratamento"}` : "Nenhuma imagem vinculada a esta fase/tratamento.";
+}
+
+function imageKey(phase = state.phase, treatment = state.currentTreatment){
+  return `${phase}:${treatment}`;
+}
+
+function compressImage(file, maxSize, quality){
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onerror = reject;
+    reader.onload = () => {
+      const img = new Image();
+      img.onerror = reject;
+      img.onload = () => {
+        const scale = Math.min(1, maxSize / Math.max(img.width, img.height));
+        const canvas = document.createElement("canvas");
+        canvas.width = Math.max(1, Math.round(img.width * scale));
+        canvas.height = Math.max(1, Math.round(img.height * scale));
+        const ctx = canvas.getContext("2d");
+        ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+        resolve(canvas.toDataURL("image/jpeg", quality));
+      };
+      img.src = reader.result;
+    };
+    reader.readAsDataURL(file);
+  });
+}
+
+function getHarvestPoints(){
+  if(!state.harvestMaps) state.harvestMaps = {};
+  const key = String(state.currentTreatment);
+  return state.harvestMaps[key] || [];
+}
+
+function setHarvestPoints(points){
+  if(!state.harvestMaps) state.harvestMaps = {};
+  state.harvestMaps[String(state.currentTreatment)] = points;
+}
+
+function addMapPoint(){
+  if(!navigator.geolocation){
+    toast("GPS não disponível neste navegador.");
+    return;
+  }
+  navigator.geolocation.getCurrentPosition(pos => {
+    const points = getHarvestPoints().slice();
+    points.push({
+      lat: Number(pos.coords.latitude.toFixed(7)),
+      lon: Number(pos.coords.longitude.toFixed(7)),
+      accuracy: Math.round(pos.coords.accuracy)
+    });
+    setHarvestPoints(points);
+    const area = polygonAreaHa(points);
+    const areaInput = $("#harvestArea");
+    if(area && areaInput) areaInput.value = area.toFixed(4);
+    saveDraft();
+    renderMap();
+    calculatePhase();
+    toast(`Ponto ${points.length} registrado.`);
+  }, () => toast("Não consegui acessar o GPS."), {enableHighAccuracy:true, timeout:12000, maximumAge:5000});
+}
+
+function clearMapPoints(){
+  setHarvestPoints([]);
+  const areaInput = $("#harvestArea");
+  if(areaInput) areaInput.value = "";
+  saveDraft();
+  renderMap();
+  calculatePhase();
+  toast("Perímetro da área limpo.");
+}
+
+function renderMap(){
+  const points = getHarvestPoints();
+  const list = $("#mapPoints");
+  const svg = $("#mapSvg");
+  if(!list || !svg) return;
+  if(!points.length){
+    list.innerHTML = '<span style="color:var(--muted);font-size:13px">Nenhum ponto registrado. Toque em <b>Adicionar ponto GPS</b> caminhando ao redor da área.</span>';
+  } else {
+    const area = polygonAreaHa(points);
+    const areaStr = area ? ` — Área calculada: <b style="color:#1a7a2e">${area.toFixed(4)} ha</b>` : (points.length < 3 ? " — Adicione ao menos 3 pontos para calcular a área." : "");
+    list.innerHTML = points.map((p,i) => `<div style="font-family:monospace;font-size:12px;padding:2px 0">P${i+1}: ${p.lat}, ${p.lon} <span style="color:var(--muted)">(±${p.accuracy||"-"}m)</span></div>`).join("") + `<div style="margin-top:8px;font-size:13px">${areaStr}</div>`;
+  }
+  svg.textContent = "";
+  if(points.length < 2) return;
+  const xs = points.map(p => p.lon);
+  const ys = points.map(p => p.lat);
+  const minX = Math.min(...xs), maxX = Math.max(...xs);
+  const minY = Math.min(...ys), maxY = Math.max(...ys);
+  const norm = p => {
+    const x = maxX === minX ? 50 : 8 + ((p.lon - minX) / (maxX - minX)) * 84;
+    const y = maxY === minY ? 50 : 92 - ((p.lat - minY) / (maxY - minY)) * 84;
+    return [x,y];
+  };
+  const poly = document.createElementNS("http://www.w3.org/2000/svg","polygon");
+  poly.setAttribute("points", points.map(p => norm(p).join(",")).join(" "));
+  poly.setAttribute("fill", "rgba(23,107,50,.22)");
+  poly.setAttribute("stroke", "#176b32");
+  poly.setAttribute("stroke-width", "2");
+  svg.appendChild(poly);
+  points.forEach((p,i) => {
+    const [x,y] = norm(p);
+    const c = document.createElementNS("http://www.w3.org/2000/svg","circle");
+    c.setAttribute("cx", x); c.setAttribute("cy", y); c.setAttribute("r", "3");
+    c.setAttribute("fill", "#33251b");
+    svg.appendChild(c);
+    const t = document.createElementNS("http://www.w3.org/2000/svg","text");
+    t.setAttribute("x", x + 3); t.setAttribute("y", y - 3);
+    t.setAttribute("font-size", "7"); t.setAttribute("fill", "#33251b");
+    t.textContent = i + 1;
+    svg.appendChild(t);
+  });
+}
+
+function polygonAreaHa(points){
+  if(!points || points.length < 3) return null;
+  const lat0 = points.reduce((sum,p) => sum + p.lat, 0) / points.length * Math.PI / 180;
+  const meters = points.map(p => ({
+    x: p.lon * Math.PI / 180 * 6378137 * Math.cos(lat0),
+    y: p.lat * Math.PI / 180 * 6378137
+  }));
+  let area = 0;
+  for(let i=0;i<meters.length;i++){
+    const j = (i + 1) % meters.length;
+    area += meters[i].x * meters[j].y - meters[j].x * meters[i].y;
+  }
+  return Math.abs(area / 2) / 10000;
+}
+
+function syncRanges(){
+  $("#afvValue").textContent = `${$("#afv").value}%`;
+  $("#severityValue").textContent = `${$("#severity").value}%`;
+  $("#rotValue").textContent = `${$("#rot").value}%`;
+}
+
+function calculate(plant = null){
+  const p = plant || collectPlant();
+  const afv = num(p.afv) ?? 0;
+  const sev = num(p.severity) ?? 0;
+  const rows = num(p.rows);
+  const kernels = num(p.kernels);
+  const rot = num(p.rot) ?? 0;
+  const grains = rows !== null && kernels !== null ? Math.round(rows * kernels) : null;
+  const isf = afv * (1 - sev / 100);
+  const grainScore = grains !== null ? Math.min((grains / 800) * 100, 100) : null;
+  const stemScore = Math.max(0, 100 - rot * 1.5);
+  const nit = grainScore !== null ? (isf * .35) + (grainScore * .4) + (stemScore * .25) : null;
+
+  if(!plant){
+    $("#grainPotential").textContent = grains !== null ? grains.toLocaleString("pt-BR") : "-";
+    $("#isf").textContent = afv > 0 || sev > 0 ? isf.toFixed(1) : "-";
+    const nitEl = $("#nit");
+    nitEl.textContent = nit !== null ? nit.toFixed(1) : "-";
+    nitEl.style.color = nit === null ? "var(--sun)" : nit >= 75 ? "#68d391" : nit >= 50 ? "var(--sun)" : "#ff8a80";
+  }
+  return {grains,isf,nit};
+}
+
+function validatePlant(){
+  clearValidation();
+  const p = collectPlant();
+  let ok = true;
+  const req = [
+    ["date", !!$("#date").value],
+    ["plot", !!$("#plot").value.trim()],
+    ["rows", inRange(num(p.rows), 8, 24)],
+    ["kernels", inRange(num(p.kernels), 10, 60)],
+    ["r3", !!p.r3]
+  ];
+  req.forEach(([field, valid]) => {
+    if(!valid){
+      const wrap = $(`[data-field="${field}"]`);
+      if(wrap) wrap.classList.add("invalid");
+      ok = false;
+    }
+  });
+  return ok;
+}
+
+function inRange(value, min, max){
+  return value !== null && !Number.isNaN(value) && value >= min && value <= max;
+}
+
+function clearValidation(){
+  $$(".invalid").forEach(el => el.classList.remove("invalid"));
+}
+
+function switchTab(tab){
+  saveDraft();
+  $$(".tab").forEach(btn => btn.classList.toggle("active", btn.dataset.tab === tab));
+  $("#formView").classList.toggle("hidden", tab !== "form");
+  $("#summaryView").classList.toggle("hidden", tab !== "summary");
+  if(tab === "summary") buildSummary();
+}
+
+function updateProgress(){
+  let saved = 0;
+  if(!state.phase){
+    $("#progressFill").style.width = "0%";
+    return;
+  }
+  if(state.phase === "r3") state.treatments.forEach((_, i) => saved += Object.values(state.data[i] || {}).filter(hasPlantData).length);
+  else state.treatments.forEach((_, i) => saved += Object.values(state.phaseData[state.phase]?.[i] || {}).filter(hasPhaseData).length);
+  const expected = Math.max(state.treatments.length * TARGET_PLANTS, 1);
+  $("#progressFill").style.width = `${Math.min(100, Math.round(saved / expected * 100))}%`;
+}
+
+function buildSummary(){
+  const root = $("#summaryContent");
+  root.textContent = "";
+  if(!state.phase){
+    root.innerHTML = '<div class="empty">Selecione uma fase fenológica para visualizar o resumo.</div>';
+    return;
+  }
+  if(state.phase !== "r3"){
+    buildPhaseSummary(root);
+    return;
+  }
+  const treatmentRows = getTreatmentRows();
+  const totalPlants = treatmentRows.reduce((sum, row) => sum + row.plants.length, 0);
+  if(!totalPlants){
+    root.innerHTML = '<div class="empty">Nenhuma avaliação salva ainda.</div>';
+    return;
+  }
+  const title = document.createElement("h1");
+  title.className = "report-title";
+  title.textContent = "Relatório de Campo — Verdix";
+  root.appendChild(title);
+
+  const meta = document.createElement("div");
+  meta.className = "summary-card";
+  meta.innerHTML = `<div class="summary-title">${escapeHtml(state.meta.farm || "Fazenda não informada")}</div><div class="summary-meta">Talhão: ${escapeHtml(state.meta.plot || "-")} · Híbrido: ${escapeHtml(state.meta.hybrid || "-")}<br>${escapeHtml(state.meta.date || "")} · ${escapeHtml(state.meta.evaluator || "")} · ${escapeHtml(state.meta.weather || "")}<br>${totalPlants} planta${totalPlants > 1 ? "s" : ""} avaliadas em ${treatmentRows.length} tratamento${treatmentRows.length > 1 ? "s" : ""}</div>`;
+  root.appendChild(meta);
+
+  root.appendChild(buildComparisonCard(treatmentRows));
+
+  treatmentRows.forEach(row => {
+    const card = document.createElement("div");
+    card.className = "summary-card";
+    const stats = row.stats;
+    const image = state.treatmentImages?.[imageKey("r3", row.index)];
+    card.innerHTML = `<div class="summary-head"><div><div class="summary-title">${escapeHtml(row.name)}</div><div class="summary-meta">${row.plants.length} planta${row.plants.length > 1 ? "s" : ""} avaliadas</div></div><div class="summary-meta">NIT ${fmt(stats.nit,1)}</div></div>
+      ${image?.dataUrl ? `<img class="treatment-photo" src="${image.dataUrl}" alt="Imagem do tratamento ${escapeHtml(row.name)}">` : ""}
+      <table><tr><th>Parâmetro</th><th>Média</th></tr>
+      <tr><td>Área foliar verde</td><td>${fmt(stats.afv,1)}%</td></tr>
+      <tr><td>Severidade doença</td><td>${fmt(stats.severity,1)}%</td></tr>
+      <tr><td>Índice sanidade foliar</td><td>${fmt(stats.isf,1)}</td></tr>
+      <tr><td>Grãos pot./espiga</td><td>${fmt(stats.grains,0)}</td></tr>
+      <tr><td>Altura de planta</td><td>${fmt(stats.plantHeight,0)} cm</td></tr>
+      <tr><td>Diâmetro colmo</td><td>${fmt(stats.stemDiameter,1)} mm</td></tr>
+      <tr><td>Podridão de colmo</td><td>${fmt(stats.rot,1)}%</td></tr></table>`;
+    root.appendChild(card);
+    root.appendChild(buildPlantDetailCard(row));
+  });
+}
+
+function buildPhaseSummary(root){
+  const rows = getPhaseRows();
+  const total = rows.reduce((sum,row) => sum + row.entries.length, 0);
+  if(!total){
+    root.innerHTML = '<div class="empty">Nenhuma avaliação salva ainda.</div>';
+    return;
+  }
+  const title = document.createElement("h1");
+  title.className = "report-title";
+  title.textContent = `Relatório de Avaliação - ${phaseLabels[state.phase]}`;
+  root.appendChild(title);
+  const meta = document.createElement("div");
+  meta.className = "summary-card";
+  meta.innerHTML = `<div class="summary-title">${escapeHtml(state.meta.farm || "Fazenda não informada")}</div><div class="summary-meta">Talhão: ${escapeHtml(state.meta.plot || "-")} · Híbrido: ${escapeHtml(state.meta.hybrid || "-")}<br>${escapeHtml(state.meta.date || "")} · ${escapeHtml(state.meta.evaluator || "")} · ${escapeHtml(state.meta.weather || "")}<br>${total} avaliação${total > 1 ? "ões" : ""} em ${rows.length} tratamento${rows.length > 1 ? "s" : ""}</div>`;
+  root.appendChild(meta);
+  if(state.phase === "harvest") root.appendChild(buildHarvestComparison(rows));
+  rows.forEach(row => root.appendChild(buildPhaseDetailCard(row)));
+}
+
+function getPhaseRows(){
+  return state.treatments.map((name,index) => {
+    const entries = Object.entries(state.phaseData[state.phase]?.[index] || {})
+      .filter(([,entry]) => hasPhaseData(entry))
+      .sort(([a],[b]) => Number(a) - Number(b));
+    return {name,index,entries};
+  }).filter(row => row.entries.length);
+}
+
+function buildHarvestComparison(rows){
+  const ranked = rows.map(row => {
+    const yields = row.entries.map(([,e]) => harvestProductivity(e)).filter(v => v !== null);
+    const avgYield = yields.length ? yields.reduce((a,b) => a+b, 0) / yields.length : null;
+    return {...row, avgYield};
+  }).sort((a,b) => (b.avgYield ?? -1) - (a.avgYield ?? -1));
+  const card = document.createElement("div");
+  card.className = "summary-card";
+  card.innerHTML = `<div class="summary-head"><div><div class="summary-title">Comparação de produtividade</div><div class="summary-meta">Resultado em sacas por hectare por tratamento.</div></div></div>
+    <table><tr><th>Rank</th><th>Tratamento</th><th>Avaliações</th><th>Produtividade média</th></tr>
+    ${ranked.map((row,i) => `<tr><td><span class="rank">${i+1}</span></td><td>${escapeHtml(row.name)}</td><td>${row.entries.length}</td><td>${row.avgYield === null ? "-" : row.avgYield.toFixed(1) + " sc/ha"}</td></tr>`).join("")}
+    </table>`;
+  return card;
+}
+
+function buildPhaseDetailCard(row){
+  const schema = phaseSchemas[state.phase];
+  const card = document.createElement("div");
+  card.className = "summary-card";
+  const image = state.treatmentImages?.[imageKey(state.phase, row.index)];
+  const cols = state.phase === "harvest"
+    ? ["harvestArea","harvestWeight","grainMoisture","correctedWeight","finalStand","productivity"]
+    : schema.filter(f => f.type !== "textarea").map(f => f.id);
+  card.innerHTML = `<div class="summary-head"><div><div class="summary-title">${escapeHtml(row.name)}</div><div class="summary-meta">${row.entries.length} avaliação${row.entries.length > 1 ? "ões" : ""}</div></div></div>
+    ${image?.dataUrl ? `<img class="treatment-photo" src="${image.dataUrl}" alt="Imagem de ${escapeHtml(phaseLabels[state.phase])} - ${escapeHtml(row.name)}">` : ""}
+    <div class="comparison-wrap"><table><tr><th>#</th>${cols.map(id => `<th>${escapeHtml(labelForField(id))}</th>`).join("")}<th>Obs.</th></tr>
+    ${row.entries.map(([idx,entry]) => `<tr><td>${Number(idx)+1}</td>${cols.map(id => `<td>${phaseCell(entry,id)}</td>`).join("")}<td>${escapeHtml(shortText(entry.phaseNotes || entry.harvestNotes || "", 70) || "-")}</td></tr>`).join("")}
+    </table></div>`;
+  return card;
+}
+
+function getTreatmentRows(){
+  return state.treatments.map((name, index) => {
+    const plants = Object.values(state.data[index] || {}).filter(hasPlantData);
+    return {name, index, plants, stats: plants.length ? treatmentStats(plants) : null};
+  }).filter(row => row.plants.length);
+}
+
+function buildComparisonCard(rows){
+  const ranked = rows.slice().sort((a,b) => (b.stats.nit ?? -1) - (a.stats.nit ?? -1));
+  const rankMap = new Map(ranked.map((row, index) => [row.name, index + 1]));
+  const best = ranked[0];
+  const card = document.createElement("div");
+  card.className = "summary-card";
+  card.innerHTML = `<div class="summary-head"><div><div class="summary-title">Comparação entre tratamentos</div><div class="summary-meta">Ordenação por NIT; maior valor indica melhor desempenho integrado.</div></div><div class="summary-meta">${best ? `Melhor: ${escapeHtml(best.name)}` : ""}</div></div>
+    <div class="comparison-wrap"><table>
+    <tr><th>Rank</th><th>Tratamento</th><th>Plantas</th><th>AFV</th><th>Sev.</th><th>ISF</th><th>Grãos</th><th>Alt.</th><th>Colmo</th><th>Podridão</th><th>NIT</th></tr>
+    ${ranked.map(row => `<tr><td><span class="rank">${rankMap.get(row.name)}</span></td><td>${escapeHtml(row.name)}</td><td>${row.plants.length}</td><td>${fmt(row.stats.afv,1)}%</td><td>${fmt(row.stats.severity,1)}%</td><td>${fmt(row.stats.isf,1)}</td><td>${fmt(row.stats.grains,0)}</td><td>${fmt(row.stats.plantHeight,0)} cm</td><td>${fmt(row.stats.stemDiameter,1)} mm</td><td>${fmt(row.stats.rot,1)}%</td><td>${fmt(row.stats.nit,1)}</td></tr>`).join("")}
+    </table></div>`;
+  return card;
+}
+
+function buildPlantDetailCard(row){
+  const card = document.createElement("div");
+  card.className = "summary-card";
+  const entries = Object.entries(state.data[row.index] || {})
+    .filter(([, plant]) => hasPlantData(plant))
+    .sort(([a], [b]) => Number(a) - Number(b));
+  card.innerHTML = `<div class="summary-head"><div><div class="summary-title">Dados por planta - ${escapeHtml(row.name)}</div><div class="summary-meta">Principais informações coletadas em campo.</div></div></div>
+    <div class="comparison-wrap"><table>
+    <tr><th>Planta</th><th>AFV</th><th>Sev.</th><th>Patógeno</th><th>Fileiras</th><th>Grãos/fileira</th><th>Grãos pot.</th><th>R3</th><th>Alt. planta</th><th>Colmo</th><th>Podridão</th><th>NIT</th><th>Obs.</th></tr>
+    ${entries.map(([plantIndex, plant]) => {
+      const calc = calculate(plant);
+      return `<tr><td>P${Number(plantIndex) + 1}</td><td>${cell(plant.afv)}%</td><td>${cell(plant.severity)}%</td><td>${escapeHtml(plant.pathogen || "-")}</td><td>${cell(plant.rows)}</td><td>${cell(plant.kernels)}</td><td>${calc.grains ?? "-"}</td><td>${escapeHtml(plant.r3 || "-")}</td><td>${plant.plantHeight ? `${escapeHtml(plant.plantHeight)} cm` : "-"}</td><td>${plant.stemDiameter ? `${escapeHtml(plant.stemDiameter)} mm` : "-"}</td><td>${cell(plant.rot)}%</td><td>${calc.nit !== null ? calc.nit.toFixed(1) : "-"}</td><td>${escapeHtml(shortText(plant.notes, 70) || "-")}</td></tr>`;
+    }).join("")}
+    </table></div>`;
+  return card;
+}
+
+function treatmentStats(plants){
+  const avg = key => {
+    const values = plants.map(p => num(p[key])).filter(v => v !== null && !Number.isNaN(v));
+    return values.length ? values.reduce((a,b) => a + b, 0) / values.length : null;
+  };
+  const derived = plants.map(p => calculate(p));
+  const avgDerived = key => {
+    const values = derived.map(d => d[key]).filter(v => v !== null && !Number.isNaN(v));
+    return values.length ? values.reduce((a,b) => a + b, 0) / values.length : null;
+  };
+  return {
+    afv: avg("afv"),
+    severity: avg("severity"),
+    plantHeight: avg("plantHeight"),
+    stemDiameter: avg("stemDiameter"),
+    rot: avg("rot"),
+    grains: avgDerived("grains"),
+    isf: avgDerived("isf"),
+    nit: avgDerived("nit")
+  };
+}
+
+function exportCsv(){
+  if(!state.phase){
+    toast("Selecione a fase fenológica antes de exportar.");
+    return;
+  }
+  saveDraft();
+  collectMeta();
+  if(state.phase !== "r3"){
+    exportPhaseCsv();
+    return;
+  }
+  const header = ["Fazenda","Talhao","Hibrido","Data","Avaliador","Condicao","Tratamento","Planta","AFV_%","Sev_%","Patogeno","Folhas_Verdes","Comp_Espiga_cm","Diam_Espiga_mm","Num_Fileiras","Graos_Fileira","Graos_Pot_Espiga","Alt_Insercao_cm","R3","Alt_Planta_cm","Diam_Colmo_mm","Stay_Green","Canivete","Podridao_%","ISF","NIT","Latitude","Longitude","Obs"];
+  const rows = [header];
+  state.treatments.forEach((treatment, ti) => {
+    Object.entries(state.data[ti] || {}).forEach(([pi, p]) => {
+      if(!hasPlantData(p)) return;
+      const d = calculate(p);
+      rows.push([
+        state.meta.farm,state.meta.plot,state.meta.hybrid,state.meta.date,state.meta.evaluator,state.meta.weather,
+        treatment, Number(pi)+1, p.afv, p.severity, p.pathogen, p.greenLeaves, p.earLength, p.earDiameter,
+        p.rows, p.kernels, d.grains ?? "", p.earHeight, p.r3, p.plantHeight, p.stemDiameter, p.stayGreen,
+        p.knife, p.rot, d.isf !== null ? d.isf.toFixed(2) : "", d.nit !== null ? d.nit.toFixed(2) : "",
+        p.geo?.lat ?? "", p.geo?.lon ?? "", p.notes
+      ]);
+    });
+  });
+  const csv = "\uFEFF" + rows.map(row => row.map(csvCell).join(";")).join("\n");
+  const blob = new Blob([csv], {type:"text/csv;charset=utf-8"});
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob);
+  a.download = `avaliacao_milho_r3_${safeName(state.meta.plot || "talhao")}.csv`;
+  a.click();
+  URL.revokeObjectURL(a.href);
+  toast("CSV exportado.");
+}
+
+function exportPhaseCsv(){
+  const schema = phaseSchemas[state.phase];
+  const cols = schema.map(f => f.id);
+  if(state.phase === "harvest") cols.push("productivity");
+  const header = ["Fase","Fazenda","Talhao","Hibrido","Data","Avaliador","Tratamento","Avaliacao",...cols.map(labelForField),"Latitude_Pontos","Longitude_Pontos"];
+  const rows = [header];
+  state.treatments.forEach((treatment, ti) => {
+    Object.entries(state.phaseData[state.phase]?.[ti] || {}).forEach(([idx, entry]) => {
+      if(!hasPhaseData(entry)) return;
+      const lats = (entry.mapPoints || []).map(p => p.lat).join("|");
+      const lons = (entry.mapPoints || []).map(p => p.lon).join("|");
+      rows.push([phaseLabels[state.phase],state.meta.farm,state.meta.plot,state.meta.hybrid,state.meta.date,state.meta.evaluator,treatment,Number(idx)+1,...cols.map(id => id === "productivity" ? harvestProductivity(entry)?.toFixed(2) || "" : entry[id] || ""),lats,lons]);
+    });
+  });
+  const csv = "\uFEFF" + rows.map(row => row.map(csvCell).join(";")).join("\n");
+  const blob = new Blob([csv], {type:"text/csv;charset=utf-8"});
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob);
+  a.download = `avaliacao_${safeName(state.phase)}_${safeName(state.meta.plot || "talhao")}.csv`;
+  a.click();
+  URL.revokeObjectURL(a.href);
+  toast("CSV exportado.");
+}
+
+function printReport(){
+  if(!state.phase){
+    toast("Selecione a fase fenológica antes de gerar PDF.");
+    return;
+  }
+  saveDraft();
+  collectMeta();
+  switchTab("summary");
+  buildSummary();
+  setTimeout(() => window.print(), 80);
+}
+
+function hasPlantData(plant){
+  if(!plant) return false;
+  const hasTypedData = ["pathogen","greenLeaves","earLength","earDiameter","rows","kernels","earHeight","r3","plantHeight","stemDiameter","stayGreen","knife","notes"].some(key => {
+    const value = plant[key];
+    return value !== undefined && value !== null && String(value).trim() !== "";
+  });
+  const changedRanges = Number(plant.afv) !== 80 || Number(plant.severity) !== 5 || Number(plant.rot) !== 0;
+  return hasTypedData || changedRanges;
+}
+
+function hasPhaseData(entry){
+  if(!entry) return false;
+  return Object.entries(entry).some(([key,value]) => {
+    if(["savedAt","mapPoints","productivity"].includes(key)) return false;
+    return value !== undefined && value !== null && String(value).trim() !== "";
+  }) || (Array.isArray(entry.mapPoints) && entry.mapPoints.length > 0);
+}
+
+function labelForField(id){
+  if(id === "productivity") return "Prod. sc/ha";
+  const field = Object.values(phaseSchemas).flat().find(f => f.id === id);
+  return field ? field.label : id;
+}
+
+function phaseCell(entry, id){
+  if(id === "productivity"){
+    const prod = harvestProductivity(entry);
+    return prod === null ? "-" : `${prod.toFixed(1)} sc/ha`;
+  }
+  const value = entry[id];
+  return value === undefined || value === null || String(value).trim() === "" ? "-" : escapeHtml(value);
+}
+
+function csvCell(value){
+  let text = value === null || value === undefined ? "" : String(value);
+  if(/^[=+\-@]/.test(text)) text = "'" + text;
+  text = text.replace(/\r?\n/g, " ").replace(/"/g, '""');
+  return `"${text}"`;
+}
+
+function safeName(text){
+  return String(text).normalize("NFD").replace(/[\u0300-\u036f]/g,"").replace(/[^a-zA-Z0-9_-]+/g,"_").replace(/^_+|_+$/g,"") || "talhao";
+}
+
+function captureGeo(){
+  if(state.phase === "harvest"){
+    addMapPoint();
+    return;
+  }
+  if(!navigator.geolocation){
+    toast("GPS não disponível neste navegador.");
+    return;
+  }
+  navigator.geolocation.getCurrentPosition(pos => {
+    state.geo = {
+      lat: Number(pos.coords.latitude.toFixed(7)),
+      lon: Number(pos.coords.longitude.toFixed(7)),
+      accuracy: Math.round(pos.coords.accuracy),
+      capturedAt: new Date().toISOString()
+    };
+    saveDraft();
+    toast(`GPS registrado (${state.geo.accuracy} m).`);
+  }, () => toast("Não consegui acessar o GPS."), {enableHighAccuracy:true, timeout:12000, maximumAge:30000});
+}
+
+async function copyBackup(){
+  saveDraft();
+  const text = JSON.stringify(state, null, 2);
+  try{
+    await navigator.clipboard.writeText(text);
+    toast("Backup JSON copiado.");
+  }catch(e){
+    const blob = new Blob([text], {type:"application/json"});
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(blob);
+    a.download = `backup_milho_r3_${safeName(state.meta.plot || "talhao")}.json`;
+    a.click();
+    URL.revokeObjectURL(a.href);
+    toast("Backup JSON baixado.");
+  }
+}
+
+function clearAll(){
+  if(!confirm("Limpar todos os dados deste ensaio neste navegador?")) return;
+  localStorage.removeItem(STORAGE_KEY);
+  state = {meta:{date:todayISO()},treatments:["Testemunha","Tratamento 1"],treatmentImages:{},phase:"",phaseData:{},harvestMaps:{},currentTreatment:0,currentPlant:0,geo:null,data:{}};
+  $("#phaseSelect").value = "";
+  loadMeta();
+  renderPhase();
+  renderTreatments();
+  renderPlants();
+  renderTreatmentImage();
+  clearForm();
+  calculate();
+  buildSummary();
+  updateProgress();
+  toast("Ensaio limpo.");
+}
+
+function fmt(value, digits){
+  return value === null || value === undefined || Number.isNaN(value) ? "-" : Number(value).toLocaleString("pt-BR",{minimumFractionDigits:digits,maximumFractionDigits:digits});
+}
+
+function cell(value){
+  return value === null || value === undefined || String(value).trim() === "" ? "-" : escapeHtml(value);
+}
+
+function shortText(value, max){
+  const text = String(value || "").trim();
+  return text.length > max ? text.slice(0, max - 1) + "..." : text;
+}
+
+function escapeHtml(value){
+  return String(value ?? "").replace(/[&<>"']/g, ch => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));
+}
+
+function cssEscape(value){
+  if(window.CSS && CSS.escape) return CSS.escape(value);
+  return String(value).replace(/["\\]/g, "\\$&");
+}
+
+function toast(message){
+  const box = $("#toast");
+  box.textContent = message;
+  box.classList.add("show");
+  clearTimeout(toast.timer);
+  toast.timer = setTimeout(() => box.classList.remove("show"), 2400);
+}
+
+window.addEventListener("load", boot);
+
+// ═══════════════════════════════════════
+// PRODUTOS POR TRATAMENTO
+// ═══════════════════════════════════════
+function renderProdList(){
+  const list = $("#prodList");
+  if(!list) return;
+  list.innerHTML = "";
+  const prods = state.treatmentProducts[state.currentTreatment] || [];
+  prods.forEach((p, i) => {
+    const row = document.createElement("div");
+    row.className = "prod-row";
+    row.innerHTML = `
+      <input type="text" placeholder="Nome do produto" value="${p.name||""}" oninput="updateProd(${i},'name',this.value)">
+      <input type="number" placeholder="Dose" step="0.01" value="${p.dose||""}" oninput="updateProd(${i},'dose',this.value)">
+      <select onchange="updateProd(${i},'unit',this.value)">
+        <option value="L/ha" ${p.unit==='L/ha'?'selected':''}>L/ha</option>
+        <option value="kg/ha" ${p.unit==='kg/ha'?'selected':''}>kg/ha</option>
+        <option value="g/ha" ${p.unit==='g/ha'?'selected':''}>g/ha</option>
+        <option value="mL/ha" ${p.unit==='mL/ha'?'selected':''}>mL/ha</option>
+      </select>
+      <button class="prod-del" type="button" onclick="delProd(${i})" title="Remover">✕</button>`;
+    list.appendChild(row);
+  });
+}
+
+function addProd(){
+  if(!state.treatmentProducts[state.currentTreatment])
+    state.treatmentProducts[state.currentTreatment] = [];
+  state.treatmentProducts[state.currentTreatment].push({name:"", dose:"", unit:"L/ha"});
+  renderProdList();
+  persist();
+}
+
+function delProd(i){
+  state.treatmentProducts[state.currentTreatment].splice(i, 1);
+  renderProdList();
+  persist();
+}
+
+function updateProd(i, key, val){
+  if(!state.treatmentProducts[state.currentTreatment]) return;
+  state.treatmentProducts[state.currentTreatment][i][key] = val;
+  persist();
+}
+
+function saveProdList(){
+  // products are updated in real-time via updateProd — nothing extra needed
+}
+
+// ═══════════════════════════════════════
+// CALENDÁRIO DE AVALIAÇÕES
+// ═══════════════════════════════════════
+const evalSchedule = [
+  { phase:"planting",    label:"Plantio / Aplicação", icon:"🌾", daysMin:0,  daysMax:0  },
+  { phase:"germination", label:"Germinação",      icon:"🌱", daysMin:12, daysMax:18 },
+  { phase:"v3",          label:"V3",              icon:"🌿", daysMin:18, daysMax:25 },
+  { phase:"v8",          label:"V8",              icon:"🌾", daysMin:35, daysMax:45 },
+  { phase:"r3",          label:"R3 — Grão leitoso", icon:"🌽", daysMin:65, daysMax:75 },
+  { phase:"harvest",     label:"Colheita",        icon:"🚜", daysMin:95, daysMax:115 },
+];
+
+function renderCalendar(){
+  const sowInput = $("#sowingDate");
+  if(!sowInput) return;
+  const sowVal = sowInput.value;
+  state.sowingDate = sowVal;
+  persist();
+  const rows = $("#calRows");
+  if(!rows) return;
+  if(!sowVal){ rows.innerHTML = '<div style="text-align:center;color:var(--muted);font-size:13px;padding:8px 0">Informe a data de plantio para calcular o calendário.</div>'; return; }
+  const sow = new Date(sowVal + "T00:00:00");
+  const today = new Date(); today.setHours(0,0,0,0);
+  rows.innerHTML = "";
+  evalSchedule.forEach(ev => {
+    const dMin = new Date(sow); dMin.setDate(dMin.getDate() + ev.daysMin);
+    const dMax = new Date(sow); dMax.setDate(dMax.getDate() + ev.daysMax);
+    if(ev.daysMin === 0 && ev.daysMax === 0){ dMin.setDate(sow.getDate()); dMax.setDate(sow.getDate()); }
+    const diffMin = Math.round((dMin - today) / 86400000);
+    const diffMax = Math.round((dMax - today) / 86400000);
+    const fmtDate = d => d.toLocaleDateString("pt-BR",{day:"2-digit",month:"short"});
+    let cls = "", badge = "", badgeText = "";
+    if(diffMax < 0){
+      cls = "done-phase"; badge = "ok"; badgeText = "Passou";
+    } else if(diffMin <= 0 && diffMax >= 0){
+      cls = "today-zone"; badge = "today"; badgeText = "📍 Agora";
+    } else if(diffMin > 0 && diffMin <= 7){
+      cls = "today-zone"; badge = "soon"; badgeText = `em ${diffMin}d`;
+    } else if(diffMin < 0 && diffMax < 0){
+      cls = "overdue"; badge = "late"; badgeText = "Atrasado";
+    } else {
+      cls = ""; badge = "future"; badgeText = `~${diffMin}–${diffMax}d`;
+    }
+    const row = document.createElement("div");
+    row.className = `cal-row ${cls}`;
+    row.innerHTML = `
+      <div class="cal-icon">${ev.icon}</div>
+      <div class="cal-info">
+        <div class="cal-phase-name">${ev.label}</div>
+        <div class="cal-date">${fmtDate(dMin)} – ${fmtDate(dMax)}</div>
+      </div>
+      <span class="cal-badge ${badge}">${badgeText}</span>`;
+    rows.appendChild(row);
+  });
+}
+
+</script>
+</body>
+</html>
