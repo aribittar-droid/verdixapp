@@ -737,10 +737,25 @@ function addTreatment(){
   toast("Tratamento adicionado.");
 }
 
+function renameTreatment(i){
+  const current = state.treatments[i];
+  const novo = prompt("Novo nome para o tratamento:", current);
+  if(novo && novo.trim() && novo.trim() !== current){
+    state.treatments[i] = novo.trim();
+    persist();
+    renderTreatments();
+    renderProdList();
+    toast("Tratamento renomeado.");
+  }
+}
+
 function renderTreatments(){
   const nav = $("#treatNav");
   nav.textContent = "";
   state.treatments.forEach((t, i) => {
+    const wrap = document.createElement("div");
+    wrap.style.cssText = "display:inline-flex;align-items:center;gap:0;flex-shrink:0";
+
     const btn = document.createElement("button");
     btn.type = "button";
     btn.className = "treat-btn" + (i === state.currentTreatment ? " active" : "");
@@ -760,9 +775,22 @@ function renderTreatments(){
       if(state.phase === "planting") setTimeout(() => renderPlantingGpsBlock(), 50);
       setTimeout(() => reloadR5Blocks(), 60);
       setTimeout(() => { renderPhotoGroups(); const ab = document.getElementById("addPhotoGroupBtn"); if(ab) ab.addEventListener("click", addPhotoGroup); }, 50);
-  setTimeout(() => reloadR5Blocks(), 60);
     });
-    nav.appendChild(btn);
+    wrap.appendChild(btn);
+
+    // ── edit button (pencil) ──
+    const edit = document.createElement("button");
+    edit.type = "button";
+    edit.title = "Renomear";
+    edit.textContent = "✏️";
+    edit.style.cssText = "background:none;border:none;font-size:13px;cursor:pointer;padding:0 4px 0 2px;opacity:.7;flex-shrink:0";
+    edit.addEventListener("click", (e) => {
+      e.stopPropagation();
+      renameTreatment(i);
+    });
+    wrap.appendChild(edit);
+
+    nav.appendChild(wrap);
   });
 }
 
@@ -2056,7 +2084,179 @@ function buildPhaseSummary(root){
   meta.innerHTML = `<div class="summary-title">${escapeHtml(state.meta.farm || "Fazenda não informada")}</div><div class="summary-meta">Talhão: ${escapeHtml(state.meta.plot || "-")} · Híbrido: ${escapeHtml(state.meta.hybrid || "-")}<br>${escapeHtml(state.meta.date || "")} · ${escapeHtml(state.meta.evaluator || "")} · ${escapeHtml(state.meta.weather || "")}<br>${total} avaliação${total > 1 ? "ões" : ""} em ${rows.length} tratamento${rows.length > 1 ? "s" : ""}</div>`;
   root.appendChild(meta);
   if(state.phase === "harvest") root.appendChild(buildHarvestComparison(rows));
-  rows.forEach(row => root.appendChild(buildPhaseDetailCard(row)));
+  if(state.phase === "r5")     root.appendChild(buildR5Comparison(rows));
+  rows.forEach(row => {
+    if(state.phase === "r5") root.appendChild(buildR5DetailCard(row));
+    else root.appendChild(buildPhaseDetailCard(row));
+  });
+}
+
+function buildR5Comparison(rows){
+  // ── collect data per treatment (average across plants) ──
+  const data = rows.map(row => {
+    const keys = row.entries.map(([k]) => String(row.index) + "_" + String(k));
+    const ds   = keys.map(k => (state.r5Data || {})[k] || {});
+
+    const avg = field => {
+      const vals = ds.map(d => parseFloat(d[field])).filter(v => !isNaN(v) && v > 0);
+      return vals.length ? vals.reduce((a,b) => a+b, 0) / vals.length : null;
+    };
+    const avgGPE = () => {
+      const all = [];
+      ds.forEach(d => {
+        const ears = typeof d.r5_ears === "string" ? (()=>{ try{ return JSON.parse(d.r5_ears); }catch(e){ return []; }})() : (d.r5_ears||[]);
+        ears.forEach(e => { const f=parseFloat(e.fileiras),g=parseFloat(e.graos); if(!isNaN(f)&&!isNaN(g)&&f>0&&g>0) all.push(f*g); });
+      });
+      return all.length ? all.reduce((a,b)=>a+b,0)/all.length : null;
+    };
+
+    const prodDesc = avg("r5_prod_desc_sc") || avg("r5_prod_sc");
+    const prodBruta = avg("r5_prod_sc");
+    return {
+      name:      row.name,
+      index:     row.index,
+      n:         row.entries.length,
+      stand:     avg("r5_stand_pop"),
+      p1000:     avg("r5_p1000"),
+      gpe:       avgGPE(),
+      umActual:  avg("r5_umActual"),
+      umTarget:  avg("r5_umTarget"),
+      fatorDesc: avg("r5_fator_desc"),
+      prodBruta,
+      prodDesc,
+    };
+  }).sort((a,b) => (b.prodDesc||0) - (a.prodDesc||0));
+
+  const maxProd = Math.max(...data.map(d => d.prodDesc||0), 1);
+  const medals  = ["🥇","🥈","🥉"];
+  const winner  = data[0];
+
+  const card = document.createElement("div");
+  card.className = "summary-card";
+
+  // ── header ──
+  card.innerHTML = `<div class="summary-head">
+    <div>
+      <div class="summary-title">📊 Comparação de Tratamentos — R5 Pré-colheita</div>
+      <div class="summary-meta">${data.length} tratamento${data.length>1?"s":""} · produtividade com desconto de umidade</div>
+    </div>
+  </div>`;
+
+  // ── bar chart rows ──
+  const barSection = document.createElement("div");
+  barSection.style.cssText = "margin:14px 0 8px";
+
+  data.forEach((t, i) => {
+    const pct  = maxProd > 0 && t.prodDesc ? Math.round((t.prodDesc / maxProd) * 100) : 0;
+    const isWinner = i === 0 && t.prodDesc;
+    const delta = i > 0 && winner.prodDesc && t.prodDesc
+      ? (t.prodDesc - winner.prodDesc).toFixed(1)
+      : null;
+    const deltaStr = delta ? `<span style="color:#c0392b;font-size:11px;margin-left:6px">▼ ${Math.abs(delta)} sc/ha</span>` : "";
+
+    const row = document.createElement("div");
+    row.style.cssText = "margin-bottom:14px";
+    row.innerHTML = `
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:5px">
+        <div style="display:flex;align-items:center;gap:6px">
+          <span style="font-size:18px">${medals[i]||"·"}</span>
+          <span style="font-weight:700;font-size:14px">${escapeHtml(t.name)}</span>
+          <span style="font-size:11px;color:#888">(${t.n} avaliação${t.n>1?"ões":""})</span>
+        </div>
+        <div style="display:flex;align-items:center">
+          <span style="font-family:monospace;font-weight:800;font-size:16px;color:${isWinner?"#1a7a2e":"#333"}">
+            ${t.prodDesc ? t.prodDesc.toFixed(1)+" sc/ha" : "—"}
+          </span>
+          ${deltaStr}
+        </div>
+      </div>
+      <div style="background:#eee;border-radius:6px;height:14px;overflow:hidden">
+        <div style="height:100%;width:${pct}%;background:${isWinner?"#1a7a2e":"#7ab88a"};border-radius:6px;transition:width .4s"></div>
+      </div>
+      <div style="font-size:11px;color:#888;margin-top:3px">
+        Prod. bruta: ${t.prodBruta ? t.prodBruta.toFixed(1)+" sc/ha" : "—"}
+        ${t.fatorDesc ? " · Desconto: "+t.fatorDesc.toFixed(2)+"%" : ""}
+        ${t.umActual ? " · Umid. atual: "+t.umActual.toFixed(1)+"%" : ""}
+      </div>`;
+    barSection.appendChild(row);
+  });
+  card.appendChild(barSection);
+
+  // ── comparison table ──
+  const tbl = document.createElement("table");
+  tbl.style.marginTop = "10px";
+  tbl.innerHTML = `
+    <tr>
+      <th>Tratamento</th>
+      <th>Estande (pl/ha)</th>
+      <th>GPE (grãos/espiga)</th>
+      <th>P1000 (g)</th>
+      <th>Umid. atual</th>
+      <th>Desconto</th>
+      <th>Prod. bruta</th>
+      <th>Prod. c/ desc.</th>
+    </tr>
+    ${data.map((t,i) => `
+    <tr style="${i===0?"background:#f0fbf4":""}">
+      <td><b>${medals[i]||""} ${escapeHtml(t.name)}</b></td>
+      <td>${t.stand ? Number(Math.round(t.stand)).toLocaleString("pt-BR") : "-"}</td>
+      <td>${t.gpe ? Math.round(t.gpe) : "-"}</td>
+      <td>${t.p1000 ? t.p1000.toFixed(1)+"g" : "-"}</td>
+      <td>${t.umActual ? t.umActual.toFixed(1)+"%" : "-"}</td>
+      <td>${t.fatorDesc ? t.fatorDesc.toFixed(2)+"%" : "-"}</td>
+      <td>${t.prodBruta ? t.prodBruta.toFixed(1)+" sc/ha" : "-"}</td>
+      <td><b>${t.prodDesc ? t.prodDesc.toFixed(1)+" sc/ha" : "-"}</b></td>
+    </tr>`).join("")}`;
+  card.appendChild(tbl);
+
+  // ── winner highlight ──
+  if(winner && winner.prodDesc){
+    const win = document.createElement("div");
+    win.style.cssText = "background:#1a7a2e;color:#fff;border-radius:10px;padding:12px 16px;margin-top:14px;display:flex;align-items:center;gap:10px";
+    win.innerHTML = `<span style="font-size:28px">🥇</span>
+      <div>
+        <div style="font-weight:800;font-size:15px">${escapeHtml(winner.name)}</div>
+        <div style="font-size:12px;opacity:.8">Melhor produtividade estimada com desconto de umidade</div>
+        <div style="font-family:monospace;font-size:20px;font-weight:800;color:#f5c518;margin-top:2px">${winner.prodDesc.toFixed(1)} sc/ha</div>
+      </div>`;
+    card.appendChild(win);
+  }
+
+  return card;
+}
+
+function buildR5DetailCard(row){
+  const card = document.createElement("div");
+  card.className = "summary-card";
+  const image = state.treatmentImages?.[imageKey(state.phase, row.index)];
+  card.innerHTML = `<div class="summary-head"><div><div class="summary-title">${escapeHtml(row.name)}</div><div class="summary-meta">${row.entries.length} avaliação${row.entries.length>1?"ões":""}</div></div></div>
+    ${image?.dataUrl ? `<img class="treatment-photo" src="${image.dataUrl}" alt="${escapeHtml(row.name)}">` : ""}`;
+
+  row.entries.forEach(([idx, entry]) => {
+    const k = String(row.index) + "_" + String(idx);
+    const d = (state.r5Data || {})[k] || {};
+    const ears = typeof d.r5_ears === "string" ? (()=>{ try{ return JSON.parse(d.r5_ears); }catch(e){ return []; } })() : (d.r5_ears || []);
+    const validGPE = ears.map(e => { const f=parseFloat(e.fileiras),g=parseFloat(e.graos); return (!isNaN(f)&&!isNaN(g)&&f>0&&g>0)?f*g:null; }).filter(v=>v!==null);
+    const avgGPE = validGPE.length ? (validGPE.reduce((a,b)=>a+b,0)/validGPE.length) : null;
+
+    const tbl = document.createElement("table");
+    tbl.style.marginTop = "10px";
+    tbl.innerHTML = `<tr><th colspan="2">Ponto ${Number(idx)+1}</th></tr>
+      <tr><td>Estande (espigas/20m)</td><td>${d.r5_spikes||"-"}</td></tr>
+      <tr><td>Espaçamento</td><td>${d.r5_spacing ? (parseFloat(d.r5_spacing)*100).toFixed(0)+" cm" : "-"}</td></tr>
+      <tr><td>Estande estimado</td><td>${d.r5_stand_pop ? Number(d.r5_stand_pop).toLocaleString("pt-BR")+" pl/ha" : "-"}</td></tr>
+      <tr><td>Grãos pot./espiga (média 8 esp.)</td><td>${avgGPE ? Math.round(avgGPE) : "-"}</td></tr>
+      <tr><td>Peso 500 grãos</td><td>${d.r5_w500 ? parseFloat(d.r5_w500).toFixed(1)+"g" : "-"}</td></tr>
+      <tr><td>P1000</td><td>${d.r5_p1000 ? parseFloat(d.r5_p1000).toFixed(1)+"g" : "-"}</td></tr>
+      <tr><td>Umidade atual</td><td>${d.r5_umActual ? parseFloat(d.r5_umActual).toFixed(1)+"%" : "-"}</td></tr>
+      <tr><td>Umidade desejada</td><td>${d.r5_umTarget ? parseFloat(d.r5_umTarget).toFixed(1)+"%" : "-"}</td></tr>
+      <tr><td>Desconto de umidade</td><td>${d.r5_fator_desc ? parseFloat(d.r5_fator_desc).toFixed(2)+"%" : "-"}</td></tr>
+      <tr><td>Produtividade bruta</td><td>${d.r5_prod_sc ? parseFloat(d.r5_prod_sc).toFixed(1)+" sc/ha" : "-"}</td></tr>
+      <tr><td><b>Produtividade c/ desconto</b></td><td><b>${d.r5_prod_desc_sc ? parseFloat(d.r5_prod_desc_sc).toFixed(1)+" sc/ha" : (d.r5_prod_sc ? parseFloat(d.r5_prod_sc).toFixed(1)+" sc/ha" : "-")}</b></td></tr>
+      ${entry.r5Notes ? `<tr><td>Observações</td><td>${escapeHtml(entry.r5Notes)}</td></tr>` : ""}`;
+    card.appendChild(tbl);
+  });
+  return card;
 }
 
 function getPhaseRows(){
