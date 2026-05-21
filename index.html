@@ -50,7 +50,7 @@ button{cursor:pointer}
 .field:last-child{margin-bottom:0}
 label{display:block;margin-bottom:6px;color:var(--muted);font-size:11px;text-transform:uppercase;letter-spacing:.06em;font-weight:800}
 input,select,textarea{width:100%;border:2px solid var(--line);border-radius:10px;background:#fbfaf7;color:var(--ink);padding:12px 13px;font-size:16px;min-width:0;box-sizing:border-box}
-input[type=date]{font-size:14px}
+input[type=date]{font-size:13px;padding:10px 8px}
 input:focus,select:focus,textarea:focus{outline:0;border-color:var(--green);background:#fff}
 textarea{min-height:90px;resize:vertical;font-size:14px}
 .hint{font-size:11px;color:var(--muted);margin-top:4px}
@@ -166,6 +166,25 @@ td:last-child{text-align:right;font-family:ui-monospace,SFMono-Regular,Consolas,
 .stand-row .field{margin-bottom:0}
 .stand-result{display:flex;align-items:center;justify-content:space-between;background:#1a7a2e;border-radius:9px;padding:10px 14px;color:#fff;margin-top:4px}
 .stand-result-label{font-size:11px;text-transform:uppercase;letter-spacing:.5px;opacity:.7;white-space:nowrap}
+/* ── Álbum de fotos ── */
+.album-section{margin-top:16px}
+.album-section-title{font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.6px;color:var(--green,#1a7a2e);margin-bottom:10px}
+.photo-group{background:#fafaf8;border:1.5px solid var(--line);border-radius:13px;padding:13px;margin-bottom:10px;position:relative}
+.photo-group-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}
+.photo-group-tag{font-family:'DM Mono',monospace;font-size:11px;font-weight:500;background:var(--gp,#e8f5ec);color:var(--green,#1a7a2e);padding:3px 9px;border-radius:8px}
+.photo-group-del{background:none;border:none;color:#c0392b;font-size:18px;cursor:pointer;line-height:1;padding:0 2px}
+.photo-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:7px;margin-bottom:10px}
+.photo-thumb-wrap{position:relative;aspect-ratio:1;border-radius:9px;overflow:hidden;background:#e8e8e8;border:1.5px solid var(--line)}
+.photo-thumb-wrap img{width:100%;height:100%;object-fit:cover;display:block}
+.photo-thumb-del{position:absolute;top:4px;right:4px;width:22px;height:22px;border-radius:50%;background:rgba(0,0,0,.55);border:none;color:#fff;font-size:14px;cursor:pointer;display:flex;align-items:center;justify-content:center;line-height:1}
+.photo-add-thumb{aspect-ratio:1;border-radius:9px;border:2px dashed var(--line);background:transparent;display:flex;flex-direction:column;align-items:center;justify-content:center;cursor:pointer;color:var(--muted);font-size:11px;gap:4px;transition:border-color .2s}
+.photo-add-thumb span{font-size:22px}
+.photo-add-thumb:hover{border-color:var(--green,#1a7a2e)}
+.photo-group-comment{width:100%;border:1.5px solid var(--line);border-radius:9px;background:#fff;padding:10px 12px;font-size:14px;font-family:inherit;color:var(--ink);resize:none;min-height:66px;box-sizing:border-box}
+.photo-group-comment:focus{outline:none;border-color:var(--green,#1a7a2e)}
+.add-group-btn{width:100%;padding:11px;border:2px dashed var(--line);border-radius:11px;background:transparent;color:var(--muted);font-size:13px;font-weight:600;cursor:pointer;transition:all .2s;display:flex;align-items:center;justify-content:center;gap:6px}
+.add-group-btn:hover{border-color:var(--green,#1a7a2e);color:var(--green,#1a7a2e)}
+
 /* ── Planting GPS ── */
 .gps-block{background:#f2efe8;border-radius:11px;padding:13px;display:flex;flex-direction:column;gap:10px}
 .gps-point-row{display:flex;align-items:center;gap:10px}
@@ -177,6 +196,24 @@ td:last-child{text-align:right;font-family:ui-monospace,SFMono-Regular,Consolas,
 .gps-capture-btn{flex-shrink:0;padding:9px 14px;border-radius:9px;border:2px solid var(--green);background:#fff;color:var(--green);font-size:13px;font-weight:700;cursor:pointer;white-space:nowrap}
 .gps-capture-btn.captured{background:var(--green);color:#fff;border-color:var(--green)}
 .gps-divider{height:1px;background:var(--line)}
+/* ── R5 Pré-colheita ── */
+.r5-block{background:#fafaf8;border:1.5px solid var(--line);border-radius:13px;padding:14px;margin-bottom:0}
+.r5-block-title{font-family:'Syne',sans-serif;font-weight:800;font-size:13px;color:#1a7a2e;text-transform:uppercase;letter-spacing:.5px;margin-bottom:12px;display:flex;align-items:center;gap:6px}
+.r5-result{background:#1a7a2e;border-radius:10px;padding:11px 14px;display:flex;align-items:center;justify-content:space-between;margin-top:12px}
+.r5-result-label{font-size:11px;color:rgba(255,255,255,.65);text-transform:uppercase;letter-spacing:.5px}
+.r5-result-val{font-family:'DM Mono',monospace;font-size:20px;font-weight:500;color:#f5c518}
+.r5-result-unit{font-size:11px;color:rgba(255,255,255,.5);margin-top:1px}
+.r5-ear-grid{display:flex;flex-direction:column;gap:8px;margin-bottom:4px}
+.r5-ear-row{display:grid;grid-template-columns:auto 1fr 1fr;gap:8px;align-items:center}
+.r5-ear-label{font-family:'DM Mono',monospace;font-size:12px;color:#1a7a2e;font-weight:500;white-space:nowrap}
+.r5-ear-row input{padding:9px 10px;border:1.5px solid var(--line);border-radius:9px;font-size:15px;background:#fff;width:100%;font-family:inherit}
+.r5-ear-row input:focus{outline:none;border-color:#1a7a2e}
+.r5-summary-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:12px}
+.r5-summary-item{background:rgba(26,122,46,.08);border-radius:9px;padding:10px 12px}
+.r5-summary-label{font-size:10px;text-transform:uppercase;letter-spacing:.5px;color:#7a7a7a;margin-bottom:3px}
+.r5-summary-val{font-family:'DM Mono',monospace;font-size:17px;font-weight:500;color:#1a7a2e}
+.r5-summary-unit{font-size:10px;color:#aaa}
+
 
 .stand-result-val{font-family:'DM Mono',monospace;font-size:22px;font-weight:500;color:#f5c518}
 .stand-result-unit{font-size:11px;opacity:.6}
@@ -221,7 +258,8 @@ td:last-child{text-align:right;font-family:ui-monospace,SFMono-Regular,Consolas,
     <label for="phaseSelect">Fase de avaliação</label>
     <select id="phaseSelect">
       <option value="">Selecionar fase</option>
-      <option value="r3">R3 - grão leitoso</option>
+      <option value="r3">R3 — Grão leitoso</option>
+      <option value="r5">R5 — Pré-colheita</option>
       <option value="planting">Acomp. de Plantio / Aplicação</option>
       <option value="germination">Germinação / emergência</option>
       <option value="v3">V3</option>
@@ -242,8 +280,15 @@ td:last-child{text-align:right;font-family:ui-monospace,SFMono-Regular,Consolas,
     <section class="card">
       <h2>Dados fixos da fazenda</h2>
       <div class="grid">
-        <div class="field full" data-field="date"><label for="date">Data</label><input type="date" id="date"><div class="err">Informe a data.</div></div>
-        <div class="field" data-field="evaluator"><label for="evaluator">Avaliador</label><input type="text" id="evaluator" autocomplete="name" placeholder="Nome"></div>
+        <div class="field full" data-field="date">
+          <label for="date">Data</label>
+          <input type="date" id="date" style="text-align:center">
+          <div class="err">Informe a data.</div>
+        </div>
+        <div class="field full" data-field="evaluator">
+          <label for="evaluator">Avaliador</label>
+          <input type="text" id="evaluator" autocomplete="name" placeholder="Nome">
+        </div>
         <div class="field" data-field="plot"><label for="plot">Talhão</label><input type="text" id="plot" placeholder="Ex: T-05"><div class="err">Informe o talhão.</div></div>
         <div class="field"><label for="farm">Fazenda</label><input type="text" id="farm" placeholder="Nome"></div>
         <div class="field full"><label for="hybrid">Híbrido</label><input type="text" id="hybrid" placeholder="Ex: DKB 310 PRO3"></div>
@@ -268,6 +313,14 @@ td:last-child{text-align:right;font-family:ui-monospace,SFMono-Regular,Consolas,
             </div>
             <div class="photo-name" id="treatmentPhotoName">Nenhuma imagem vinculada a esta fase/tratamento.</div>
           </div>
+
+        <div class="field full album-section">
+          <div class="album-section-title">📸 Álbum de Fotos</div>
+          <div id="photoGroupsContainer"></div>
+          <button class="add-group-btn" type="button" id="addPhotoGroupBtn">
+            <span>＋</span> Novo grupo de fotos
+          </button>
+        </div>
         </div>
       </div>
     </section>
@@ -398,6 +451,7 @@ const TARGET_PLANTS = 10;
 const ids = ["date","evaluator","plot","farm","hybrid","weather","afv","severity","pathogen","greenLeaves","earLength","earDiameter","rows","kernels","earHeight","plantHeight","stemDiameter","rot","notes"];
 const phaseLabels = {
   r3: "R3 - grão leitoso",
+  r5: "R5 — Pré-colheita",
   planting: "Acomp. de Plantio / Aplicação",
   germination: "Germinação / emergência",
   v3: "V3",
@@ -405,6 +459,12 @@ const phaseLabels = {
   harvest: "Colheita"
 };
 const phaseSchemas = {
+  r5: [
+    {id:"__r5stand",  label:"__r5stand",  type:"__custom"},
+    {id:"__r5ears",   label:"__r5ears",   type:"__custom"},
+    {id:"__r5grains", label:"__r5grains", type:"__custom"},
+    {id:"r5Notes", label:"Observações gerais", type:"textarea"}
+  ],
   planting: [
     {id:"applicationMethod", label:"Forma de Aplicação", type:"select", options:["","Tratamento de semente (TS)","Sulco de plantio","Aplicação foliar","TS + Sulco de plantio","TS + Aplicação foliar","Sulco + Aplicação foliar"]},
     {id:"applicationRate", label:"Volume de calda aplicado", type:"number", step:"0.01", suffix:"L/ha ou mL/100kg", placeholder:"Ex: 200"},
@@ -456,6 +516,8 @@ let state = {
   phaseData: {},
   harvestMaps: {},
   plantingGps: {},   // { tratIndex: { start: {lat,lon,acc}, end: {lat,lon,acc} } }
+  photoGroups: {},   // { "tratIndex_phase": [{id, comment, photos:[dataURL,...]}] }
+  r5Data: {},       // { "tratIndex_plantIndex": {...} }
   currentTreatment: 0,
   currentPlant: 0,
   geo: null,
@@ -484,6 +546,7 @@ function boot(){
   if(state.sowingDate){ const sw=$("#sowingDate"); if(sw) sw.value=state.sowingDate; }
   renderCalendar();
   if(state.phase){ const pf=$("#prodField"); if(pf) pf.style.display=""; renderProdList(); }
+  setTimeout(() => { renderPhotoGroups(); const ab = document.getElementById("addPhotoGroupBtn"); if(ab) ab.addEventListener("click", addPhotoGroup); }, 100);
 }
 
 function bindEvents(){
@@ -695,6 +758,9 @@ function renderTreatments(){
       loadPlant();
       calculate();
       if(state.phase === "planting") setTimeout(() => renderPlantingGpsBlock(), 50);
+      setTimeout(() => reloadR5Blocks(), 60);
+      setTimeout(() => { renderPhotoGroups(); const ab = document.getElementById("addPhotoGroupBtn"); if(ab) ab.addEventListener("click", addPhotoGroup); }, 50);
+  setTimeout(() => reloadR5Blocks(), 60);
     });
     nav.appendChild(btn);
   });
@@ -794,6 +860,8 @@ function renderPhase(){
   wrap.style.flexDirection = "column";
   wrap.style.gap = "0";
   phaseSchemas[state.phase].forEach(field => wrap.appendChild(createPhaseField(field)));
+  setTimeout(() => { renderPhotoGroups(); const ab = document.getElementById("addPhotoGroupBtn"); if(ab) ab.addEventListener("click", addPhotoGroup); }, 50);
+  setTimeout(() => reloadR5Blocks(), 60);
   $$("#phaseFields input, #phaseFields select, #phaseFields textarea").forEach(el => {
     el.addEventListener("input", () => { saveDraft(); calculatePhase(); });
     el.addEventListener("change", () => { saveDraft(); calculatePhase(); });
@@ -895,6 +963,599 @@ function buildPlantingGpsBlock(){
   return wrap;
 }
 
+
+// ═══════════════════════════════════════
+// ÁLBUM DE FOTOS POR GRUPO
+// ═══════════════════════════════════════
+function albumKey(){
+  return `${state.currentTreatment}_${state.phase || "geral"}`;
+}
+function getPhotoGroups(){
+  if(!state.photoGroups) state.photoGroups = {};
+  if(!state.photoGroups[albumKey()]) state.photoGroups[albumKey()] = [];
+  return state.photoGroups[albumKey()];
+}
+function savePhotoGroups(){
+  persist();
+}
+
+function addPhotoGroup(){
+  const groups = getPhotoGroups();
+  groups.push({ id: Date.now(), comment: "", photos: [] });
+  savePhotoGroups();
+  renderPhotoGroups();
+}
+
+function delPhotoGroup(id){
+  state.photoGroups[albumKey()] = getPhotoGroups().filter(g => g.id !== id);
+  savePhotoGroups();
+  renderPhotoGroups();
+}
+
+function updateGroupComment(id, val){
+  const g = getPhotoGroups().find(g => g.id === id);
+  if(g){ g.comment = val; savePhotoGroups(); }
+}
+
+function fileToDataURL(file){
+  return new Promise(function(resolve, reject){
+    var reader = new FileReader();
+    reader.onload = function(e){ resolve(e.target.result); };
+    reader.onerror = function(){ reject(new Error("FileReader error")); };
+    reader.readAsDataURL(file);
+  });
+}
+
+function resizeDataURL(dataURL, maxPx, quality){
+  return new Promise(function(resolve){
+    var img = new Image();
+    img.onload = function(){
+      var w = img.width, h = img.height;
+      if(w > maxPx || h > maxPx){
+        if(w >= h){ h = Math.round(h * maxPx / w); w = maxPx; }
+        else      { w = Math.round(w * maxPx / h); h = maxPx; }
+      }
+      var canvas = document.createElement("canvas");
+      canvas.width = Math.max(1, w);
+      canvas.height = Math.max(1, h);
+      canvas.getContext("2d").drawImage(img, 0, 0, canvas.width, canvas.height);
+      resolve(canvas.toDataURL("image/jpeg", quality));
+    };
+    img.onerror = function(){ resolve(dataURL); }; // fallback: keep original
+    img.src = dataURL;
+  });
+}
+
+function addPhotoToGroup(id){
+  var input = document.createElement("input");
+  input.type = "file";
+  input.accept = "image/*";
+  input.multiple = true;
+  input.style.cssText = "position:fixed;top:-9999px;left:-9999px;opacity:0";
+  document.body.appendChild(input);
+
+  input.addEventListener("change", function(){
+    var files = Array.from(input.files || []);
+    try{ document.body.removeChild(input); }catch(e){}
+    if(!files.length) return;
+
+    var promises = files.map(function(file){
+      return fileToDataURL(file)
+        .then(function(raw){ return resizeDataURL(raw, 800, 0.72); })
+        .catch(function(){ return null; });
+    });
+
+    Promise.all(promises).then(function(results){
+      var grp = getPhotoGroups().find(function(g){ return g.id === id; });
+      if(grp){
+        results.forEach(function(r){ if(r) grp.photos.push(r); });
+      }
+      savePhotoGroups();
+      renderPhotoGroups();
+    });
+  });
+
+  setTimeout(function(){ input.click(); }, 80);
+}
+
+function delPhotoFromGroup(groupId, photoIdx){
+  const g = getPhotoGroups().find(g => g.id === groupId);
+  if(g){ g.photos.splice(photoIdx, 1); savePhotoGroups(); renderPhotoGroups(); }
+}
+
+function renderPhotoGroups(){
+  const container = document.getElementById("photoGroupsContainer");
+  if(!container) return;
+  container.innerHTML = "";
+  const groups = getPhotoGroups();
+
+  groups.forEach((grp, gi) => {
+    const div = document.createElement("div");
+    div.className = "photo-group";
+
+    // ── header ──
+    const head = document.createElement("div");
+    head.className = "photo-group-head";
+
+    const tag = document.createElement("span");
+    tag.className = "photo-group-tag";
+    tag.textContent = "Grupo " + (gi + 1) + "  ·  " + grp.photos.length + " foto" + (grp.photos.length !== 1 ? "s" : "");
+    head.appendChild(tag);
+
+    const delGrpBtn = document.createElement("button");
+    delGrpBtn.className = "photo-group-del";
+    delGrpBtn.type = "button";
+    delGrpBtn.title = "Remover grupo";
+    delGrpBtn.textContent = "✕";
+    delGrpBtn.addEventListener("click", (function(gid){ return function(){ delPhotoGroup(gid); }; })(grp.id));
+    head.appendChild(delGrpBtn);
+    div.appendChild(head);
+
+    // ── photo grid ──
+    const grid = document.createElement("div");
+    grid.className = "photo-grid";
+
+    grp.photos.forEach(function(src, pi){
+      const wrap = document.createElement("div");
+      wrap.className = "photo-thumb-wrap";
+
+      const img = document.createElement("img");
+      img.src = src;
+      img.alt = "Foto " + (pi + 1);
+      wrap.appendChild(img);
+
+      const delBtn = document.createElement("button");
+      delBtn.className = "photo-thumb-del";
+      delBtn.type = "button";
+      delBtn.title = "Remover foto";
+      delBtn.textContent = "✕";
+      delBtn.addEventListener("click", (function(gid, idx){ return function(){ delPhotoFromGroup(gid, idx); }; })(grp.id, pi));
+      wrap.appendChild(delBtn);
+      grid.appendChild(wrap);
+    });
+
+    // ── add button ──
+    const addBtn = document.createElement("button");
+    addBtn.className = "photo-add-thumb";
+    addBtn.type = "button";
+    const camIcon = document.createElement("span");
+    camIcon.style.fontSize = "20px";
+    camIcon.textContent = "📷";
+    const camLabel = document.createElement("span");
+    camLabel.style.fontSize = "11px";
+    camLabel.textContent = "Adicionar";
+    addBtn.appendChild(camIcon);
+    addBtn.appendChild(camLabel);
+    addBtn.addEventListener("click", (function(gid){ return function(){ addPhotoToGroup(gid); }; })(grp.id));
+    grid.appendChild(addBtn);
+    div.appendChild(grid);
+
+    // ── comment ──
+    const ta = document.createElement("textarea");
+    ta.className = "photo-group-comment";
+    ta.placeholder = "Comentário sobre este grupo de fotos...";
+    ta.value = grp.comment || "";
+    ta.addEventListener("input", (function(gid){ return function(){ updateGroupComment(gid, ta.value); }; })(grp.id));
+    div.appendChild(ta);
+
+    container.appendChild(div);
+  });
+}
+
+
+// ═══════════════════════════════════════
+// R5 — PRÉ-COLHEITA
+// ═══════════════════════════════════════
+
+// ── state helpers ──
+function r5Key(){ return String(state.currentTreatment) + "_" + String(state.currentPlant); }
+function getR5(){
+  if(!state.r5Data) state.r5Data = {};
+  if(!state.r5Data[r5Key()]) state.r5Data[r5Key()] = {};
+  return state.r5Data[r5Key()];
+}
+function setR5(obj){
+  var d = getR5();
+  Object.keys(obj).forEach(function(k){ d[k] = obj[k]; });
+  persist();
+}
+
+// ── BLOCO 1: Estande em 20m ──
+function buildR5StandBlock(){
+  var wrap = document.createElement("div");
+  wrap.className = "field";
+  wrap.dataset.phaseField = "__r5stand";
+  var lbl = document.createElement("label");
+  lbl.textContent = "1️⃣ Estande — Espigas Viáveis em 20 metros";
+  wrap.appendChild(lbl);
+  var box = document.createElement("div");
+  box.className = "r5-block";
+  box.id = "r5StandBlock";
+  wrap.appendChild(box);
+  setTimeout(function(){ renderR5StandBlock(); }, 0);
+  return wrap;
+}
+
+function renderR5StandBlock(){
+  var box = document.getElementById("r5StandBlock");
+  if(!box) return;
+  var d = getR5();
+  box.innerHTML = "";
+
+  // Row: espigas contadas
+  var fld1 = makeR5Field("Espigas viáveis contadas", "r5_spikes", "number", "Ex: 34", d.r5_spikes || "", function(v){
+    setR5({r5_spikes: v}); calcR5Stand();
+  });
+  box.appendChild(fld1);
+
+  // Row: espaçamento
+  var fld2 = document.createElement("div");
+  fld2.className = "field";
+  fld2.style.marginTop = "10px";
+  var lbl2 = document.createElement("label");
+  lbl2.textContent = "Espaçamento entre linhas";
+  fld2.appendChild(lbl2);
+  var sel = document.createElement("select");
+  sel.id = "r5_spacing";
+  sel.style.cssText = "width:100%;padding:9px 10px;border:1.5px solid var(--line);border-radius:9px;font-size:15px;background:#fff;font-family:inherit";
+  ["","0.50","0.55","0.60","0.90"].forEach(function(v){
+    var opt = document.createElement("option");
+    opt.value = v;
+    opt.textContent = v ? (parseFloat(v)*100).toFixed(0) + " cm" : "Selecionar";
+    if(String(d.r5_spacing) === v) opt.selected = true;
+    sel.appendChild(opt);
+  });
+  sel.addEventListener("change", function(){ setR5({r5_spacing: sel.value}); calcR5Stand(); });
+  fld2.appendChild(sel);
+  box.appendChild(fld2);
+
+  // Result
+  var res = document.createElement("div");
+  res.className = "r5-result";
+  res.id = "r5StandResult";
+  res.innerHTML = "<div><div class='r5-result-label'>Estande estimado</div><div class='r5-result-unit'>plantas / hectare</div></div><div class='r5-result-val' id='r5StandVal'>—</div>";
+  box.appendChild(res);
+  calcR5Stand();
+}
+
+function calcR5Stand(){
+  var d = getR5();
+  var spikes = parseFloat(d.r5_spikes);
+  var spacing = parseFloat(d.r5_spacing);
+  var el = document.getElementById("r5StandVal");
+  if(!isNaN(spikes) && !isNaN(spacing) && spacing > 0){
+    // espigas em 20m / (20m * espaçamento) * 10000m² = plantas/ha
+    var pop = Math.round((spikes / (20 * spacing)) * 10000);
+    if(el) el.textContent = pop.toLocaleString("pt-BR");
+    setR5({r5_stand_pop: pop});
+  } else {
+    if(el) el.textContent = "—";
+  }
+}
+
+// ── BLOCO 2: 8 espigas colhidas ──
+function buildR5EarsBlock(){
+  var wrap = document.createElement("div");
+  wrap.className = "field";
+  wrap.dataset.phaseField = "__r5ears";
+  var lbl = document.createElement("label");
+  lbl.textContent = "2️⃣ Colheita de 8 Espigas — Fileiras e Grãos";
+  wrap.appendChild(lbl);
+  var box = document.createElement("div");
+  box.className = "r5-block";
+  box.id = "r5EarsBlock";
+  wrap.appendChild(box);
+  setTimeout(function(){ renderR5EarsBlock(); }, 0);
+  return wrap;
+}
+
+function renderR5EarsBlock(){
+  var box = document.getElementById("r5EarsBlock");
+  if(!box) return;
+  var d = getR5();
+  var ears = d.r5_ears || [{},{},{},{},{},{},{},{}];
+  while(ears.length < 8) ears.push({});
+  box.innerHTML = "";
+
+  // Header
+  var hdr = document.createElement("div");
+  hdr.style.cssText = "display:grid;grid-template-columns:auto 1fr 1fr;gap:8px;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:#7a7a7a;margin-bottom:6px;padding:0 2px";
+  hdr.innerHTML = "<span>#</span><span>Nº Fileiras</span><span>Grãos/Fileira</span>";
+  box.appendChild(hdr);
+
+  var grid = document.createElement("div");
+  grid.className = "r5-ear-grid";
+
+  ears.forEach(function(ear, i){
+    var row = document.createElement("div");
+    row.className = "r5-ear-row";
+    var lbl = document.createElement("span");
+    lbl.className = "r5-ear-label";
+    lbl.textContent = "E" + (i+1);
+    row.appendChild(lbl);
+
+    var inpF = document.createElement("input");
+    inpF.type = "number"; inpF.inputMode = "numeric";
+    inpF.placeholder = "Ex: 16";
+    inpF.value = ear.fileiras || "";
+    inpF.addEventListener("input", (function(idx){ return function(){
+      var ears2 = getR5().r5_ears || [{},{},{},{},{},{},{},{}];
+      while(ears2.length < 8) ears2.push({});
+      ears2[idx].fileiras = inpF.value;
+      setR5({r5_ears: ears2}); calcR5Ears();
+    }; })(i));
+    row.appendChild(inpF);
+
+    var inpG = document.createElement("input");
+    inpG.type = "number"; inpG.inputMode = "numeric";
+    inpG.placeholder = "Ex: 36";
+    inpG.value = ear.graos || "";
+    inpG.addEventListener("input", (function(idx){ return function(){
+      var ears2 = getR5().r5_ears || [{},{},{},{},{},{},{},{}];
+      while(ears2.length < 8) ears2.push({});
+      ears2[idx].graos = inpG.value;
+      setR5({r5_ears: ears2}); calcR5Ears();
+    }; })(i));
+    row.appendChild(inpG);
+    grid.appendChild(row);
+  });
+  box.appendChild(grid);
+
+  // Summary grid
+  var sumGrid = document.createElement("div");
+  sumGrid.className = "r5-summary-grid";
+  sumGrid.id = "r5EarsSummary";
+  box.appendChild(sumGrid);
+  calcR5Ears();
+}
+
+function calcR5Ears(){
+  var d = getR5();
+  var ears = d.r5_ears || [];
+  var validFileiras = [], validGraos = [], validGPE = [];
+  ears.forEach(function(e){
+    var f = parseFloat(e.fileiras), g = parseFloat(e.graos);
+    if(!isNaN(f) && f > 0) validFileiras.push(f);
+    if(!isNaN(g) && g > 0) validGraos.push(g);
+    if(!isNaN(f) && !isNaN(g) && f > 0 && g > 0) validGPE.push(f * g);
+  });
+  var avg = function(arr){ return arr.length ? arr.reduce(function(a,b){return a+b;},0)/arr.length : null; };
+  var avgF = avg(validFileiras), avgG = avg(validGraos), avgGPE = avg(validGPE);
+
+  var el = document.getElementById("r5EarsSummary");
+  if(!el) return;
+  el.innerHTML = "";
+
+  var items = [
+    {label:"Fileiras (média)", val: avgF ? avgF.toFixed(1) : "—", unit:"fileiras"},
+    {label:"Grãos/fileira (média)", val: avgG ? avgG.toFixed(1) : "—", unit:"grãos"},
+    {label:"Grãos/espiga (média)", val: avgGPE ? Math.round(avgGPE).toLocaleString("pt-BR") : "—", unit:"grãos/espiga"},
+    {label:"Espigas com dados", val: validGPE.length, unit:"de 8"},
+  ];
+  items.forEach(function(item){
+    var div = document.createElement("div");
+    div.className = "r5-summary-item";
+    div.innerHTML = "<div class='r5-summary-label'>" + item.label + "</div><div class='r5-summary-val'>" + item.val + "</div><div class='r5-summary-unit'>" + item.unit + "</div>";
+    el.appendChild(div);
+  });
+
+  setR5({r5_avgGPE: avgGPE, r5_avgFileiras: avgF, r5_avgGraos: avgG});
+  calcR5Productivity();
+}
+
+// ── BLOCO 3: 500 grãos → P1000 ──
+function buildR5GrainsBlock(){
+  var wrap = document.createElement("div");
+  wrap.className = "field";
+  wrap.dataset.phaseField = "__r5grains";
+  var lbl = document.createElement("label");
+  lbl.textContent = "3️⃣ Pesagem de 500 Grãos → Peso de 1000 Grãos";
+  wrap.appendChild(lbl);
+  var box = document.createElement("div");
+  box.className = "r5-block";
+  box.id = "r5GrainsBlock";
+  wrap.appendChild(box);
+  setTimeout(function(){ renderR5GrainsBlock(); }, 0);
+  return wrap;
+}
+
+function renderR5GrainsBlock(){
+  var box = document.getElementById("r5GrainsBlock");
+  if(!box) return;
+  var d = getR5();
+  box.innerHTML = "";
+
+  // ── Peso 500 grãos ──
+  var fld = makeR5Field("Peso de 500 grãos (g)", "r5_w500", "number", "Ex: 145.5", d.r5_w500 || "", function(v){
+    setR5({r5_w500: v}); calcR5Grains();
+  });
+  fld.style.marginBottom = "0";
+  box.appendChild(fld);
+
+  // P1000 result
+  var res = document.createElement("div");
+  res.className = "r5-result";
+  res.style.marginTop = "10px";
+  res.innerHTML = "<div><div class='r5-result-label'>Peso de 1000 grãos (P1000)</div><div class='r5-result-unit'>gramas</div></div><div class='r5-result-val' id='r5P1000Val'>—</div>";
+  box.appendChild(res);
+
+  // Divider
+  var div0 = document.createElement("div");
+  div0.style.cssText = "height:1px;background:#e0e0e0;margin:14px 0 10px";
+  box.appendChild(div0);
+
+  // ── Desconto de umidade ──
+  var umLbl = document.createElement("div");
+  umLbl.style.cssText = "font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:#7a7a7a;margin-bottom:10px";
+  umLbl.textContent = "💧 Desconto de Umidade";
+  box.appendChild(umLbl);
+
+  var umGrid = document.createElement("div");
+  umGrid.style.cssText = "display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:0";
+
+  var fldUA = makeR5Field("Umidade atual (%)", "r5_umActual", "number", "Ex: 18.5", d.r5_umActual || "", function(v){
+    setR5({r5_umActual: v}); calcR5Productivity();
+  });
+  fldUA.style.marginBottom = "0";
+  umGrid.appendChild(fldUA);
+
+  var fldUD = makeR5Field("Umidade desejada (%)", "r5_umTarget", "number", "Ex: 13.0", d.r5_umTarget || "", function(v){
+    setR5({r5_umTarget: v}); calcR5Productivity();
+  });
+  fldUD.style.marginBottom = "0";
+  umGrid.appendChild(fldUD);
+  box.appendChild(umGrid);
+
+  // Fator desconto result
+  var resFator = document.createElement("div");
+  resFator.style.cssText = "background:#fff3cd;border:1px solid #f5c518;border-radius:10px;padding:10px 14px;display:flex;align-items:center;justify-content:space-between;margin-top:10px";
+  resFator.innerHTML = "<div><div style='font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:#856404'>Desconto de umidade</div><div style='font-size:11px;color:#856404'>diferença × 1,2</div></div><div style='font-family:monospace;font-size:18px;font-weight:700;color:#856404' id='r5UmFator'>—</div>";
+  box.appendChild(resFator);
+
+  // Divider
+  var div1 = document.createElement("div");
+  div1.style.cssText = "height:1px;background:#e0e0e0;margin:12px 0 10px";
+  box.appendChild(div1);
+
+  // Produtividade bruta
+  var res2 = document.createElement("div");
+  res2.style.cssText = "background:#2d5a1b;border-radius:10px;padding:11px 14px;display:flex;align-items:center;justify-content:space-between;margin-bottom:8px";
+  res2.innerHTML = "<div><div class='r5-result-label'>Produtividade estimada</div><div class='r5-result-unit'>sacas / ha (sem desconto)</div></div><div class='r5-result-val' id='r5ProdVal'>—</div>";
+  box.appendChild(res2);
+
+  // Produtividade com desconto
+  var res3 = document.createElement("div");
+  res3.style.cssText = "background:#1a7a2e;border-radius:10px;padding:13px 14px;display:flex;align-items:center;justify-content:space-between";
+  res3.innerHTML = "<div><div class='r5-result-label' style='font-size:12px'>✅ Produtividade c/ desconto</div><div class='r5-result-unit'>sacas / ha · umidade corrigida</div></div><div class='r5-result-val' style='font-size:24px' id='r5ProdDescVal'>—</div>";
+  box.appendChild(res3);
+
+  var calcBtn = document.createElement("button");
+  calcBtn.type = "button";
+  calcBtn.textContent = "🔄 Recalcular";
+  calcBtn.style.cssText = "width:100%;margin-top:10px;padding:11px;background:#fff;border:2px solid #1a7a2e;border-radius:10px;color:#1a7a2e;font-weight:700;font-size:14px;cursor:pointer;font-family:inherit";
+  calcBtn.addEventListener("click", function(){
+    calcR5Stand(); calcR5Ears(); calcR5Grains(); calcR5Productivity();
+  });
+  box.appendChild(calcBtn);
+
+  calcR5Grains();
+}
+
+function calcR5Grains(){
+  var d = getR5();
+  var w500 = parseFloat(d.r5_w500);
+  var p1000El = document.getElementById("r5P1000Val");
+  if(!isNaN(w500) && w500 > 0){
+    var p1000 = w500 * 2;
+    if(p1000El) p1000El.textContent = p1000.toFixed(1) + " g";
+    setR5({r5_p1000: p1000});
+  } else {
+    if(p1000El) p1000El.textContent = "—";
+  }
+  calcR5Productivity();
+}
+
+function calcR5Productivity(){
+  var d = getR5();
+
+  // Read from state (set by each block's own calc function)
+  var pop   = parseFloat(d.r5_stand_pop);
+  var gpe   = parseFloat(d.r5_avgGPE);
+  var p1000 = parseFloat(d.r5_p1000);
+
+  // Fallback: read from DOM if state not yet set
+  if(isNaN(pop)){
+    var spEl = document.getElementById("r5_spikes");
+    var scEl = document.getElementById("r5_spacing");
+    if(spEl && scEl){
+      var sp = parseFloat(spEl.value), sc = parseFloat(scEl.value);
+      if(!isNaN(sp) && !isNaN(sc) && sc > 0) pop = Math.round((sp / (20 * sc)) * 10000);
+    }
+  }
+  if(isNaN(p1000)){
+    var wEl = document.getElementById("r5_w500");
+    if(wEl){ var w = parseFloat(wEl.value); if(!isNaN(w) && w > 0) p1000 = w * 2; }
+  }
+  if(isNaN(gpe)){
+    // recalc from ear inputs
+    var total = 0, count = 0;
+    for(var i = 1; i <= 8; i++){
+      var fEl = document.querySelector("[id='" + "r5_f" + i + "']");
+      var gEl = document.querySelector("[id='" + "r5_g" + i + "']");
+      // fallback: just use stored r5_ears
+    }
+    var ears = d.r5_ears || [];
+    if(typeof ears === "string"){ try{ ears = JSON.parse(ears); }catch(e){ ears = []; } }
+    var gpes = ears.map(function(e){ var f=parseFloat(e.fileiras),g=parseFloat(e.graos); return (!isNaN(f)&&!isNaN(g)&&f>0&&g>0)?f*g:null; }).filter(function(v){return v!==null;});
+    if(gpes.length) gpe = gpes.reduce(function(a,b){return a+b;},0)/gpes.length;
+  }
+
+  var el     = document.getElementById("r5ProdVal");
+  var elDesc = document.getElementById("r5ProdDescVal");
+  var elFator = document.getElementById("r5UmFator");
+
+  if(!isNaN(pop) && !isNaN(gpe) && !isNaN(p1000) && pop>0 && gpe>0 && p1000>0){
+    var kgHa = (pop * gpe * p1000) / 1000000;
+    var scHa = kgHa / 60;
+    if(el){ el.textContent = scHa.toFixed(1) + " sc/ha"; el.style.fontSize = "17px"; }
+    setR5({r5_prod_sc: scHa});
+
+    // ── Desconto de umidade ──
+    var umA = parseFloat(d.r5_umActual);
+    var umT = parseFloat(d.r5_umTarget);
+    if(!isNaN(umA) && !isNaN(umT) && umA > umT){
+      var diff    = umA - umT;
+      var fator   = diff * 1.2;  // % de desconto
+      var scDesc  = scHa * (1 - fator / 100);
+      if(elFator)  elFator.textContent  = fator.toFixed(2) + "%";
+      if(elDesc){  elDesc.textContent   = scDesc.toFixed(1) + " sc/ha"; elDesc.style.fontSize = "22px"; }
+      setR5({r5_fator_desc: fator, r5_prod_desc_sc: scDesc});
+    } else {
+      if(elFator) elFator.textContent = "—";
+      if(elDesc)  elDesc.textContent  = "—";
+      if(!isNaN(umA) && !isNaN(umT) && umA <= umT){
+        if(elFator) elFator.textContent = "Sem desconto";
+        if(elDesc)  elDesc.textContent  = scHa.toFixed(1) + " sc/ha";
+      }
+    }
+  } else {
+    if(el)     el.textContent    = "—";
+    if(elDesc) elDesc.textContent = "—";
+    if(elFator) elFator.textContent = "—";
+    var missing = [];
+    if(isNaN(pop)   || pop   <= 0) missing.push("estande");
+    if(isNaN(gpe)   || gpe   <= 0) missing.push("grãos/espiga");
+    if(isNaN(p1000) || p1000 <= 0) missing.push("P1000");
+    if(el && missing.length) el.title = "Faltando: " + missing.join(", ");
+  }
+}
+
+// ── helper: make simple labeled input ──
+function makeR5Field(labelText, id, type, placeholder, value, onInput){
+  var wrap = document.createElement("div");
+  wrap.className = "field";
+  var lbl = document.createElement("label");
+  lbl.textContent = labelText;
+  wrap.appendChild(lbl);
+  var inp = document.createElement("input");
+  inp.type = type; inp.id = id;
+  inp.inputMode = "decimal";
+  inp.placeholder = placeholder;
+  inp.value = value;
+  inp.style.cssText = "width:100%;padding:11px 12px;border:1.5px solid var(--line);border-radius:10px;font-size:16px;background:#fff;font-family:inherit";
+  inp.addEventListener("input", function(){ onInput(inp.value); });
+  wrap.appendChild(inp);
+  return wrap;
+}
+
+// ── reload R5 blocks on treatment/plant switch ──
+function reloadR5Blocks(){
+  if(state.phase !== "r5") return;
+  renderR5StandBlock();
+  renderR5EarsBlock();
+  renderR5GrainsBlock();
+}
+
 function buildStandCalcBlock(){
   const wrap = document.createElement("div");
   wrap.className = "field full";
@@ -952,6 +1613,15 @@ function createPhaseField(field){
   if(field.type === "__custom" && field.id === "__plantingGps"){
     return buildPlantingGpsBlock();
   }
+  if(field.type === "__custom" && field.id === "__r5stand"){
+    return buildR5StandBlock();
+  }
+  if(field.type === "__custom" && field.id === "__r5ears"){
+    return buildR5EarsBlock();
+  }
+  if(field.type === "__custom" && field.id === "__r5grains"){
+    return buildR5GrainsBlock();
+  }
   const box = document.createElement("div");
   box.className = "field";
   box.dataset.phaseField = field.id;
@@ -1006,6 +1676,22 @@ function collectPhaseEntry(){
       const gps = getPlantingGps();
       entry.gpsStart = gps.start ? `${gps.start.lat},${gps.start.lon}` : "";
       entry.gpsEnd   = gps.end   ? `${gps.end.lat},${gps.end.lon}`   : "";
+      return;
+    }
+    if(field.id === "__r5stand" || field.id === "__r5ears" || field.id === "__r5grains"){
+      const d = getR5();
+      entry.r5_spikes    = d.r5_spikes    || "";
+      entry.r5_spacing   = d.r5_spacing   || "";
+      entry.r5_stand_pop = d.r5_stand_pop || "";
+      entry.r5_ears      = JSON.stringify(d.r5_ears || []);
+      entry.r5_avgGPE    = d.r5_avgGPE    || "";
+      entry.r5_w500      = d.r5_w500      || "";
+      entry.r5_p1000          = d.r5_p1000          || "";
+      entry.r5_prod_sc        = d.r5_prod_sc        || "";
+      entry.r5_umActual       = d.r5_umActual       || "";
+      entry.r5_umTarget       = d.r5_umTarget       || "";
+      entry.r5_fator_desc     = d.r5_fator_desc     || "";
+      entry.r5_prod_desc_sc   = d.r5_prod_desc_sc   || "";
       return;
     }
     const el = $(`[data-phase-input="${field.id}"]`);
@@ -1121,25 +1807,8 @@ function imageKey(phase = state.phase, treatment = state.currentTreatment){
 }
 
 function compressImage(file, maxSize, quality){
-  return new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    reader.onerror = reject;
-    reader.onload = () => {
-      const img = new Image();
-      img.onerror = reject;
-      img.onload = () => {
-        const scale = Math.min(1, maxSize / Math.max(img.width, img.height));
-        const canvas = document.createElement("canvas");
-        canvas.width = Math.max(1, Math.round(img.width * scale));
-        canvas.height = Math.max(1, Math.round(img.height * scale));
-        const ctx = canvas.getContext("2d");
-        ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-        resolve(canvas.toDataURL("image/jpeg", quality));
-      };
-      img.src = reader.result;
-    };
-    reader.readAsDataURL(file);
-  });
+  return fileToDataURL(file)
+    .then(function(raw){ return resizeDataURL(raw, maxSize, quality); });
 }
 
 function getHarvestPoints(){
@@ -1550,16 +2219,104 @@ function exportPhaseCsv(){
   toast("CSV exportado.");
 }
 
+function buildReportHTML(){
+  buildSummary();
+  var summaryEl = document.getElementById("summaryContent");
+  var summaryHTML = summaryEl ? summaryEl.innerHTML : "";
+
+  var pgKey = state.currentTreatment + "_" + (state.phase || "geral");
+  var pGroups = (state.photoGroups || {})[pgKey] || [];
+  var photoHTML = "";
+  if(pGroups.length){
+    photoHTML += "<h3 style='margin:18px 0 10px;font-size:14px;color:#1a7a2e;font-family:sans-serif'>📸 Álbum de Fotos</h3>";
+    pGroups.forEach(function(grp, gi){
+      photoHTML += "<div style='margin-bottom:16px'>";
+      photoHTML += "<div style='font-size:11px;font-weight:700;text-transform:uppercase;color:#7a7a7a;margin-bottom:8px;font-family:sans-serif'>Grupo " + (gi+1) + "</div>";
+      var imgs = grp.photos.map(function(src){
+        return "<img src='" + src + "' style='width:30%;margin-right:2%;border-radius:6px;object-fit:cover;height:80px;vertical-align:top'>";
+      }).join("");
+      if(imgs) photoHTML += "<div style='margin-bottom:6px'>" + imgs + "</div>";
+      if(grp.comment) photoHTML += "<div style='font-size:12px;color:#444;background:#f5f5f5;border-radius:6px;padding:8px 10px;font-family:sans-serif'>" + grp.comment + "</div>";
+      photoHTML += "</div>";
+    });
+  }
+
+  return "<!DOCTYPE html><html lang='pt-BR'><head><meta charset='UTF-8'>" +
+    "<meta name='viewport' content='width=device-width,initial-scale=1'>" +
+    "<title>Verdix — Relatório</title>" +
+    "<style>" +
+    "*{box-sizing:border-box;margin:0;padding:0}" +
+    "body{font-family:-apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#1a1a1a;padding:20px;max-width:800px;margin:0 auto}" +
+    ".report-title{font-size:22px;font-weight:800;margin-bottom:8px;color:#1a1a1a}" +
+    ".summary-card{border:1px solid #ddd;border-radius:10px;padding:14px;margin-bottom:14px;page-break-inside:avoid}" +
+    ".summary-title{font-size:15px;font-weight:700;margin-bottom:4px}" +
+    ".summary-meta{font-size:12px;color:#666;margin-bottom:8px;line-height:1.6}" +
+    ".summary-head{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px}" +
+    "table{width:100%;border-collapse:collapse;font-size:13px;margin-top:8px}" +
+    "th,td{padding:7px 10px;text-align:left;border-bottom:1px solid #eee}" +
+    "th{background:#f0f9f3;font-weight:600;font-size:11px;text-transform:uppercase;letter-spacing:.5px;color:#1a7a2e}" +
+    ".comparison-bar-wrap{background:#eee;border-radius:4px;height:8px;margin-top:4px;overflow:hidden}" +
+    ".comparison-bar{height:100%;background:#1a7a2e;border-radius:4px}" +
+    ".treatment-photo{width:100%;max-height:200px;object-fit:cover;border-radius:8px;margin:8px 0}" +
+    ".nit-score{font-size:28px;font-weight:800;color:#1a7a2e}" +
+    ".rank-badge{display:inline-block;padding:3px 10px;border-radius:12px;font-size:12px;font-weight:700}" +
+    ".rank-1{background:#f5c518;color:#3d2b1f}" +
+    ".rank-other{background:#eee;color:#555}" +
+    ".empty{text-align:center;color:#999;padding:30px}" +
+    "@media print{button{display:none!important}}" +
+    "</style></head><body>" +
+    summaryHTML + photoHTML +
+    "</body></html>";
+}
+
 function printReport(){
   if(!state.phase){
-    toast("Selecione a fase fenológica antes de gerar PDF.");
+    toast("Selecione a fase antes de gerar o relatório.");
     return;
   }
   saveDraft();
   collectMeta();
-  switchTab("summary");
-  buildSummary();
-  setTimeout(() => window.print(), 80);
+
+  var html = buildReportHTML();
+  var blob = new Blob([html], {type: "text/html;charset=utf-8"});
+  var url  = URL.createObjectURL(blob);
+
+  // Strategy: hidden iframe print — works on desktop
+  // On iOS: fallback to download link
+  var isIOS = /iP(hone|ad|od)/.test(navigator.userAgent);
+
+  if(isIOS){
+    // iOS: open blob URL in same tab — user can use Share > Print
+    var a = document.createElement("a");
+    a.href = url;
+    a.target = "_blank";
+    a.rel = "noopener";
+    a.style.display = "none";
+    document.body.appendChild(a);
+    a.click();
+    setTimeout(function(){
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    }, 3000);
+    toast("Relatório aberto — use Compartilhar > Imprimir para salvar PDF.");
+  } else {
+    // Desktop: open in new tab
+    var win = window.open(url, "_blank");
+    if(win){
+      win.focus();
+      setTimeout(function(){ URL.revokeObjectURL(url); }, 5000);
+    } else {
+      // Fallback: download as .html
+      var a2 = document.createElement("a");
+      a2.href = url;
+      a2.download = "verdix-relatorio.html";
+      document.body.appendChild(a2);
+      a2.click();
+      document.body.removeChild(a2);
+      setTimeout(function(){ URL.revokeObjectURL(url); }, 3000);
+      toast("Relatório baixado — abra no navegador para imprimir.");
+    }
+  }
 }
 
 function hasPlantData(plant){
@@ -1751,6 +2508,7 @@ const evalSchedule = [
   { phase:"v3",          label:"V3",              icon:"🌿", daysMin:18, daysMax:25 },
   { phase:"v8",          label:"V8",              icon:"🌾", daysMin:35, daysMax:45 },
   { phase:"r3",          label:"R3 — Grão leitoso", icon:"🌽", daysMin:65, daysMax:75 },
+  { phase:"r5",          label:"R5 — Pré-colheita", icon:"🌾", daysMin:80, daysMax:90 },
   { phase:"harvest",     label:"Colheita",        icon:"🚜", daysMin:95, daysMax:115 },
 ];
 
