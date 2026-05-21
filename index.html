@@ -428,6 +428,7 @@ td:last-child{text-align:right;font-family:ui-monospace,SFMono-Regular,Consolas,
   <section class="summary hidden" id="summaryView">
     <div class="tools">
       <button class="secondary" type="button" id="printPdf">Relatório PDF</button>
+      <button class="secondary" type="button" id="printSimple">Relatório Resumido</button>
       <button class="secondary" type="button" id="copyJson">Backup JSON</button>
       <button class="danger-btn" type="button" id="clearData">Limpar ensaio</button>
     </div>
@@ -440,6 +441,7 @@ td:last-child{text-align:right;font-family:ui-monospace,SFMono-Regular,Consolas,
     <button class="primary" type="button" id="savePlant">Salvar avaliação</button>
     <button class="secondary" type="button" id="exportCsv" title="Exportar CSV">CSV</button>
     <button class="secondary" type="button" id="printPdfBottom" title="Gerar relatório em PDF">PDF</button>
+    <button class="secondary" type="button" id="printSimpleBottom" title="Relatório resumido">Resumo</button>
     <button class="secondary" type="button" id="geoBtn" title="Registrar GPS">GPS</button>
   </div>
 </div>
@@ -558,6 +560,8 @@ function bindEvents(){
   $("#exportCsv").addEventListener("click", exportCsv);
   $("#printPdf").addEventListener("click", printReport);
   $("#printPdfBottom").addEventListener("click", printReport);
+  $("#printSimple").addEventListener("click", printSimpleReport);
+  $("#printSimpleBottom").addEventListener("click", printSimpleReport);
   $("#geoBtn").addEventListener("click", captureGeo);
   $("#treatmentImage").addEventListener("change", handleTreatmentImage);
   $("#removeTreatmentImage").addEventListener("click", removeTreatmentImage);
@@ -2417,6 +2421,294 @@ function exportPhaseCsv(){
   a.click();
   URL.revokeObjectURL(a.href);
   toast("CSV exportado.");
+}
+
+
+// ═══════════════════════════════════════
+// RELATÓRIO RESUMIDO — COMPARAÇÃO %
+// ═══════════════════════════════════════
+function getComparisonData(){
+  // Returns array of {name, index, value, label, unit, extra} per treatment
+  // value = the main KPI for comparison depending on phase
+  const phase = state.phase;
+
+  if(phase === "r3"){
+    return getTreatmentRows().map(row => {
+      const s = row.stats;
+      const nit   = s.nit   != null ? parseFloat(s.nit)   : null;
+      const isf   = s.isf   != null ? parseFloat(s.isf)   : null;
+      const grains= s.grains != null ? parseFloat(s.grains): null;
+      return {
+        name:  row.name,
+        index: row.index,
+        n:     row.plants.length,
+        value: nit,
+        label: "NIT",
+        unit:  "pts",
+        extra: [
+          {k:"ISF",       v: isf    ? isf.toFixed(1)    : "—"},
+          {k:"Grãos/espiga", v: grains ? Math.round(grains)+"" : "—"},
+          {k:"AFV",       v: s.afv  ? s.afv.toFixed(1)+"%" : "—"},
+          {k:"Severidade",v: s.severity ? s.severity.toFixed(1)+"%" : "—"},
+        ]
+      };
+    }).filter(t => t.value !== null);
+  }
+
+  if(phase === "r5"){
+    return getPhaseRows().map(row => {
+      const keys = row.entries.map(([k]) => String(row.index)+"_"+String(k));
+      const ds   = keys.map(k => (state.r5Data||{})[k]||{});
+      const avg  = field => { const v=ds.map(d=>parseFloat(d[field])).filter(v=>!isNaN(v)&&v>0); return v.length?v.reduce((a,b)=>a+b,0)/v.length:null; };
+      const prod = avg("r5_prod_desc_sc") || avg("r5_prod_sc");
+      return {
+        name:  row.name,
+        index: row.index,
+        n:     row.entries.length,
+        value: prod,
+        label: "Produtividade",
+        unit:  "sc/ha",
+        extra: [
+          {k:"Estande",    v: avg("r5_stand_pop") ? Math.round(avg("r5_stand_pop")).toLocaleString("pt-BR")+" pl/ha" : "—"},
+          {k:"P1000",      v: avg("r5_p1000")     ? avg("r5_p1000").toFixed(1)+"g" : "—"},
+          {k:"Desconto",   v: avg("r5_fator_desc") ? avg("r5_fator_desc").toFixed(2)+"%" : "—"},
+          {k:"Prod. bruta",v: avg("r5_prod_sc")   ? avg("r5_prod_sc").toFixed(1)+" sc/ha" : "—"},
+        ]
+      };
+    }).filter(t => t.value !== null);
+  }
+
+  if(phase === "harvest"){
+    return getPhaseRows().map(row => {
+      const yields = row.entries.map(([,e]) => harvestProductivity(e)).filter(v => v !== null);
+      const avg    = yields.length ? yields.reduce((a,b)=>a+b,0)/yields.length : null;
+      return {
+        name:  row.name,
+        index: row.index,
+        n:     row.entries.length,
+        value: avg,
+        label: "Produtividade",
+        unit:  "sc/ha",
+        extra: []
+      };
+    }).filter(t => t.value !== null);
+  }
+
+  // generic phases — use first numeric field as KPI
+  return getPhaseRows().map(row => {
+    const schema = (phaseSchemas[phase]||[]).filter(f=>f.type==="number"&&!f.id.startsWith("__"));
+    const kpi    = schema[0];
+    if(!kpi) return null;
+    const vals   = row.entries.map(([,e]) => parseFloat(e[kpi.id])).filter(v=>!isNaN(v)&&v>0);
+    const avg    = vals.length ? vals.reduce((a,b)=>a+b,0)/vals.length : null;
+    return { name: row.name, index: row.index, n: row.entries.length, value: avg, label: kpi.label, unit: kpi.suffix||"", extra:[] };
+  }).filter(Boolean).filter(t => t.value !== null);
+}
+
+function buildSimpleReportHTML(){
+  const phase = state.phase;
+  if(!phase) return null;
+  collectMeta();
+
+  // ── collect per-phase data ──
+  let treatments = [];
+  const medals = ["🥇","🥈","🥉"];
+  const COLORS  = ["#1a7a2e","#2ea84a","#5faa77","#8fca9f","#b5dfc0"];
+
+  if(phase === "r3"){
+    treatments = getTreatmentRows()
+      .filter(r => r.stats)
+      .map(r => ({
+        name:  r.name,
+        n:     r.plants.length,
+        params: {
+          "NIT (0–100)":         r.stats.nit,
+          "ISF (sanidade foliar)":r.stats.isf,
+          "Grãos/espiga":        r.stats.grains,
+          "AFV (%)":             r.stats.afv,
+          "Severidade (%)":      r.stats.severity,
+          "Altura planta (cm)":  r.stats.plantHeight,
+          "Diâm. colmo (mm)":    r.stats.stemDiameter,
+          "Podridão colmo (%)":  r.stats.rot,
+        }
+      }))
+      .sort((a,b) => (b.params["NIT (0–100)"]||0) - (a.params["NIT (0–100)"]||0));
+  } else if(phase === "r5"){
+    treatments = getPhaseRows().map(row => {
+      const keys = row.entries.map(([k]) => String(row.index)+"_"+String(k));
+      const ds   = keys.map(k => (state.r5Data||{})[k]||{});
+      const avg  = field => { const v=ds.map(d=>parseFloat(d[field])).filter(v=>!isNaN(v)&&v>0); return v.length?v.reduce((a,b)=>a+b,0)/v.length:null; };
+      const avgGPE = () => {
+        const all=[];
+        ds.forEach(d => {
+          const ears = typeof d.r5_ears==="string"?(()=>{try{return JSON.parse(d.r5_ears);}catch(e){return[];}})():(d.r5_ears||[]);
+          ears.forEach(e => { const f=parseFloat(e.fileiras),g=parseFloat(e.graos); if(!isNaN(f)&&!isNaN(g)&&f>0&&g>0) all.push(f*g); });
+        });
+        return all.length?all.reduce((a,b)=>a+b,0)/all.length:null;
+      };
+      return {
+        name: row.name, n: row.entries.length,
+        params: {
+          "Produt. c/ desconto (sc/ha)": avg("r5_prod_desc_sc")||avg("r5_prod_sc"),
+          "Produtividade bruta (sc/ha)": avg("r5_prod_sc"),
+          "P1000 — peso de grão (g)":    avg("r5_p1000"),
+          "Grãos/espiga":                avgGPE(),
+          "Estande (pl/ha)":             avg("r5_stand_pop"),
+          "Desconto umidade (%)":        avg("r5_fator_desc"),
+        }
+      };
+    }).sort((a,b)=>(b.params["Produt. c/ desconto (sc/ha)"]||0)-(a.params["Produt. c/ desconto (sc/ha)"]||0));
+  } else {
+    const data = getComparisonData().sort((a,b)=>b.value-a.value);
+    treatments = data.map(t => ({ name: t.name, n: t.n, params: { [t.label+" ("+t.unit+")"]: t.value } }));
+  }
+
+  if(!treatments.length) return null;
+
+  const meta   = state.meta || {};
+  const phLbl  = phaseLabels[phase]||phase;
+  const best   = treatments[0];
+
+  // ── SVG bar chart generator ──
+  function svgBar(paramName, trats, colors){
+    const vals  = trats.map(t => t.params[paramName] ?? null);
+    const valid = vals.filter(v => v !== null);
+    if(!valid.length) return "";
+    const maxV   = Math.max(...valid);
+    const minV   = Math.min(...valid);
+    const W = 420, BAR_H = 28, GAP = 10, PAD_L = 140, PAD_R = 60;
+    const H = trats.length * (BAR_H + GAP) + 20;
+    let svg = `<svg xmlns="http://www.w3.org/2000/svg" width="100%" viewBox="0 0 ${W} ${H}" style="display:block;max-width:500px;margin:0 auto">`;
+    trats.forEach((t, i) => {
+      const v   = t.params[paramName];
+      const y   = i * (BAR_H + GAP) + 10;
+      const pct = maxV > 0 && v !== null ? v / maxV : 0;
+      const barW= Math.max(2, Math.round(pct * (W - PAD_L - PAD_R)));
+      const delta = i > 0 && v !== null && best.params[paramName]
+        ? ((v - best.params[paramName]) / best.params[paramName] * 100)
+        : null;
+      const dStr  = delta !== null ? (delta >= 0 ? "+" : "") + delta.toFixed(1) + "%" : "";
+      const dColor= delta === null ? "#1a7a2e" : delta >= 0 ? "#1a7a2e" : "#c0392b";
+      // label
+      svg += `<text x="${PAD_L - 6}" y="${y + BAR_H/2 + 4}" text-anchor="end" font-size="12" font-family="sans-serif" fill="#333" font-weight="${i===0?'700':'400'}">${medals[i]||"·"} ${escapeHtml(t.name.length>14?t.name.slice(0,13)+"…":t.name)}</text>`;
+      // bar bg
+      svg += `<rect x="${PAD_L}" y="${y}" width="${W-PAD_L-PAD_R}" height="${BAR_H}" rx="6" fill="#eee"/>`;
+      // bar fill
+      if(v !== null) svg += `<rect x="${PAD_L}" y="${y}" width="${barW}" height="${BAR_H}" rx="6" fill="${colors[i]||'#aaa'}"/>`;
+      // value
+      if(v !== null) svg += `<text x="${PAD_L + barW + 4}" y="${y + BAR_H/2 + 4}" font-size="12" font-family="monospace" fill="#333" font-weight="700">${v >= 1000 ? Math.round(v).toLocaleString("pt-BR") : v.toFixed(v<10?2:1)}</text>`;
+      // delta
+      if(dStr) svg += `<text x="${W - 4}" y="${y + BAR_H/2 + 4}" text-anchor="end" font-size="11" font-family="sans-serif" fill="${dColor}" font-weight="700">${escapeHtml(dStr)}</text>`;
+    });
+    svg += "</svg>";
+    return svg;
+  }
+
+  // ── gather all param names ──
+  const allParams = [];
+  treatments.forEach(t => Object.keys(t.params).forEach(k => { if(!allParams.includes(k)) allParams.push(k); }));
+
+  // ── build HTML ──
+  let body = `
+  <div style="background:#3d2b1f;color:#fff;padding:20px 20px 16px;margin-bottom:0">
+    <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:rgba(255,255,255,.45);margin-bottom:4px">Verdix · Relatório Comercial Resumido</div>
+    <div style="font-size:20px;font-weight:900;letter-spacing:-.5px">${escapeHtml(meta.farm||"Fazenda")} <span style="color:#f5c518">·</span> ${escapeHtml(meta.plot||"Talhão")}</div>
+    <div style="font-size:12px;color:rgba(255,255,255,.6);margin-top:3px">${escapeHtml(meta.hybrid||"")} · ${phLbl} · ${escapeHtml(meta.date||"")} · ${escapeHtml(meta.evaluator||"")}</div>
+  </div>
+
+  <div style="padding:16px 16px 0">
+    <div style="background:#f0fbf4;border:2px solid #1a7a2e;border-radius:12px;padding:14px 16px;display:flex;align-items:center;gap:12px;margin-bottom:20px">
+      <span style="font-size:36px">🥇</span>
+      <div>
+        <div style="font-size:10px;text-transform:uppercase;letter-spacing:.8px;color:#1a7a2e;font-weight:700">Melhor tratamento</div>
+        <div style="font-size:18px;font-weight:900;color:#1a1a1a">${escapeHtml(best.name)}</div>
+        <div style="font-size:11px;color:#555">${best.n} avaliação${best.n>1?"ões":""}</div>
+      </div>
+    </div>`;
+
+  // ── one chart per param ──
+  allParams.forEach(param => {
+    const vals  = treatments.map(t => t.params[param]).filter(v => v !== null);
+    if(!vals.length) return;
+    const maxV  = Math.max(...vals);
+    const bestV = treatments[0].params[param];
+
+    body += `
+    <div style="margin-bottom:22px">
+      <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.6px;color:#666;margin-bottom:8px;border-bottom:1px solid #eee;padding-bottom:6px">${escapeHtml(param)}</div>
+      ${svgBar(param, treatments, COLORS)}
+    </div>`;
+  });
+
+  // ── % diff summary table ──
+  if(treatments.length > 1){
+    const mainParam = allParams[0];
+    body += `
+    <div style="margin-bottom:20px">
+      <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.6px;color:#666;margin-bottom:8px;border-bottom:1px solid #eee;padding-bottom:6px">📋 Tabela comparativa completa</div>
+      <div style="overflow-x:auto">
+      <table style="width:100%;border-collapse:collapse;font-size:12px;min-width:320px">
+        <tr style="background:#f5f5f5">
+          <th style="padding:7px 8px;text-align:left;white-space:nowrap">Tratamento</th>
+          ${allParams.map(p=>`<th style="padding:7px 8px;text-align:right;white-space:nowrap">${escapeHtml(p)}</th>`).join("")}
+          <th style="padding:7px 8px;text-align:right;white-space:nowrap">vs 🥇</th>
+        </tr>
+        ${treatments.map((t,i)=>{
+          const mainVal  = t.params[mainParam];
+          const bestMain = best.params[mainParam];
+          const delta    = (mainVal !== null && bestMain) ? ((mainVal-bestMain)/bestMain*100) : null;
+          const dStr     = delta === null ? "—" : (delta>=0?"+":"")+delta.toFixed(1)+"%";
+          const dColor   = delta === null ? "#aaa" : delta>=0?"#1a7a2e":"#c0392b";
+          return `<tr style="border-bottom:1px solid #f0f0f0;${i===0?"background:#f0fbf4":""}">
+            <td style="padding:7px 8px;font-weight:${i===0?"800":"400"};white-space:nowrap">${medals[i]||"·"} ${escapeHtml(t.name)}</td>
+            ${allParams.map(p=>{
+              const v = t.params[p];
+              if(v===null||v===undefined) return `<td style="padding:7px 8px;text-align:right;color:#aaa">—</td>`;
+              const disp = v>=1000?Math.round(v).toLocaleString("pt-BR"):v.toFixed(v<10?2:1);
+              return `<td style="padding:7px 8px;text-align:right;font-family:monospace">${escapeHtml(disp)}</td>`;
+            }).join("")}
+            <td style="padding:7px 8px;text-align:right;font-weight:700;color:${dColor}">${escapeHtml(dStr)}</td>
+          </tr>`;
+        }).join("")}
+      </table>
+      </div>
+    </div>`;
+  }
+
+  body += `</div>`;
+
+  return `<!DOCTYPE html><html lang="pt-BR"><head><meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <title>Verdix — Resumo Comercial</title>
+    <style>*{box-sizing:border-box;margin:0;padding:0}body{font-family:-apple-system,BlinkMacSystemFont,sans-serif;background:#fff;max-width:620px;margin:0 auto;color:#1a1a1a}@media print{body{background:#fff}button{display:none!important}.noprint{display:none}}</style>
+  </head><body>
+    ${body}
+    <div class="noprint" style="text-align:center;padding:20px">
+      <button onclick="window.print()" style="padding:12px 32px;background:#1a7a2e;color:#fff;border:none;border-radius:10px;font-size:15px;font-weight:700;cursor:pointer;font-family:inherit">🖨 Imprimir / Salvar PDF</button>
+    </div>
+    <div style="text-align:center;padding:8px 0 24px;font-size:10px;color:#aaa">Verdix v1.0 · gerado em ${new Date().toLocaleDateString("pt-BR")}</div>
+  </body></html>`;
+}
+function printSimpleReport(){
+  if(!state.phase){
+    toast("Selecione a fase antes de gerar o resumo.");
+    return;
+  }
+  saveDraft();
+  collectMeta();
+  const html = buildSimpleReportHTML();
+  if(!html){ toast("Sem dados para gerar o resumo."); return; }
+
+  const blob = new Blob([html], {type:"text/html;charset=utf-8"});
+  const url  = URL.createObjectURL(blob);
+  const isIOS = /iP(hone|ad|od)/.test(navigator.userAgent);
+  const a = document.createElement("a");
+  a.href = url; a.target = "_blank"; a.rel = "noopener";
+  a.style.display = "none";
+  document.body.appendChild(a);
+  a.click();
+  setTimeout(function(){ document.body.removeChild(a); URL.revokeObjectURL(url); }, 3000);
+  if(isIOS) toast("Resumo aberto — use Compartilhar > Imprimir para salvar PDF.");
 }
 
 function buildReportHTML(){
