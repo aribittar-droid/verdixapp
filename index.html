@@ -798,35 +798,119 @@ function renderTreatments(){
   });
 }
 
+function deletePlant(indexToDelete){
+  if(!confirm("Apagar ponto P" + (indexToDelete + 1) + "? Esta ação não pode ser desfeita.")) return;
+
+  // Remove from r3 data
+  const d3 = state.data[state.currentTreatment] || {};
+  const pd = state.phaseData[state.phase]?.[state.currentTreatment] || {};
+
+  // Rebuild object shifting keys down
+  function rebuildAfterDelete(obj, idx){
+    const newObj = {};
+    Object.keys(obj).sort((a,b)=>Number(a)-Number(b)).forEach(k => {
+      const n = Number(k);
+      if(n === idx) return;
+      const newKey = n < idx ? n : n - 1;
+      newObj[newKey] = obj[k];
+    });
+    return newObj;
+  }
+
+  if(state.phase === "r3"){
+    state.data[state.currentTreatment] = rebuildAfterDelete(d3, indexToDelete);
+  } else {
+    if(!state.phaseData[state.phase]) state.phaseData[state.phase] = {};
+    state.phaseData[state.phase][state.currentTreatment] = rebuildAfterDelete(pd, indexToDelete);
+  }
+
+  // Also remove r5Data if applicable
+  if(state.r5Data){
+    const oldKey = String(state.currentTreatment) + "_" + String(indexToDelete);
+    delete state.r5Data[oldKey];
+    // Shift remaining r5Data keys
+    const newR5 = {};
+    Object.keys(state.r5Data).forEach(k => {
+      const parts = k.split("_");
+      const t = Number(parts[0]), p = Number(parts[1]);
+      if(t === state.currentTreatment && p > indexToDelete){
+        newR5[String(t)+"_"+String(p-1)] = state.r5Data[k];
+      } else {
+        newR5[k] = state.r5Data[k];
+      }
+    });
+    state.r5Data = newR5;
+  }
+
+  // Adjust currentPlant
+  const remaining = Object.keys(
+    state.phase === "r3"
+      ? (state.data[state.currentTreatment]||{})
+      : (state.phaseData[state.phase]?.[state.currentTreatment]||{})
+  ).length;
+  state.currentPlant = Math.min(state.currentPlant, Math.max(0, remaining - 1));
+
+  persist();
+  renderPlants();
+  loadPlant();
+  calculate();
+  toast("Ponto P" + (indexToDelete + 1) + " apagado.");
+}
+
 function renderPlants(){
   const nav = $("#plantNav");
   nav.textContent = "";
   if(!state.phase) return;
-  const treatmentData = state.phase === "r3" ? (state.data[state.currentTreatment] || {}) : (state.phaseData[state.phase]?.[state.currentTreatment] || {});
+  const treatmentData = state.phase === "r3"
+    ? (state.data[state.currentTreatment] || {})
+    : (state.phaseData[state.phase]?.[state.currentTreatment] || {});
   const maxExisting = Object.keys(treatmentData).reduce((m, key) => Math.max(m, Number(key) + 1), 0);
   const total = Math.max(maxExisting, state.currentPlant + 1, 1);
-  for(let i=0;i<total;i++){
+
+  for(let i = 0; i < total; i++){
+    const wrap = document.createElement("div");
+    wrap.style.cssText = "position:relative;display:inline-flex;flex-shrink:0";
+
     const btn = document.createElement("button");
     btn.type = "button";
     btn.className = "plant-btn" + (i === state.currentPlant ? " active" : "") + (treatmentData[i] && i !== state.currentPlant ? " done" : "");
-    btn.textContent = `P${i+1}`;
-    btn.addEventListener("click", () => {
+    btn.textContent = "P" + (i + 1);
+    btn.addEventListener("click", (function(idx){ return function(){
       saveDraft();
-      state.currentPlant = i;
+      state.currentPlant = idx;
       persist();
       renderPlants();
       loadPlant();
       calculate();
-    });
-    nav.appendChild(btn);
+    }; })(i));
+    wrap.appendChild(btn);
+
+    // ── delete button (×) shown only on done plants ──
+    if(treatmentData[i]){
+      const del = document.createElement("button");
+      del.type = "button";
+      del.title = "Apagar P" + (i + 1);
+      del.textContent = "×";
+      del.style.cssText = "position:absolute;top:-4px;right:-4px;width:16px;height:16px;border-radius:50%;background:#c0392b;border:none;color:#fff;font-size:11px;font-weight:900;cursor:pointer;display:flex;align-items:center;justify-content:center;line-height:1;padding:0;z-index:2";
+      del.addEventListener("click", (function(idx){ return function(e){
+        e.stopPropagation();
+        deletePlant(idx);
+      }; })(i));
+      wrap.appendChild(del);
+    }
+
+    nav.appendChild(wrap);
   }
+
   const add = document.createElement("button");
   add.type = "button";
   add.className = "add-btn";
   add.textContent = "+";
-    add.addEventListener("click", () => {
+  add.addEventListener("click", () => {
     saveDraft();
-    const current = state.phase === "r3" ? (state.data[state.currentTreatment] || {}) : (state.phaseData[state.phase]?.[state.currentTreatment] || {});
+    const current = state.phase === "r3"
+      ? (state.data[state.currentTreatment] || {})
+      : (state.phaseData[state.phase]?.[state.currentTreatment] || {});
     state.currentPlant = Object.keys(current).length;
     state.geo = null;
     persist();
@@ -1338,6 +1422,37 @@ function renderR5EarsBlock(){
   sumGrid.className = "r5-summary-grid";
   sumGrid.id = "r5EarsSummary";
   box.appendChild(sumGrid);
+
+  // ── Divisor ──
+  var div1 = document.createElement("div");
+  div1.style.cssText = "height:1px;background:#e0e0e0;margin:12px 0 10px";
+  box.appendChild(div1);
+
+  // ── Peso total dos grãos ──
+  var wLbl = document.createElement("div");
+  wLbl.style.cssText = "font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:#7a7a7a;margin-bottom:8px";
+  wLbl.textContent = "⚖️ Peso Total dos Grãos (8 espigas debulhadas)";
+  box.appendChild(wLbl);
+
+  var wFld = makeR5Field("Peso total dos grãos (g)", "r5_earsTotalWeight", "number", "Ex: 1850", d.r5_earsTotalWeight || "", function(v){
+    setR5({r5_earsTotalWeight: v}); calcR5Ears();
+  });
+  wFld.style.marginBottom = "0";
+  box.appendChild(wFld);
+
+  // ── Resultado peso médio/espiga ──
+  var resW = document.createElement("div");
+  resW.className = "r5-result";
+  resW.style.marginTop = "10px";
+  resW.innerHTML = "<div><div class='r5-result-label'>Peso médio por espiga</div><div class='r5-result-unit'>gramas / espiga</div></div><div class='r5-result-val' id='r5AvgEarWeightVal'>—</div>";
+  box.appendChild(resW);
+
+  // ── Estimativa de produtividade pelo peso ──
+  var resPW = document.createElement("div");
+  resPW.style.cssText = "background:#2d5a1b;border-radius:10px;padding:11px 14px;display:flex;align-items:center;justify-content:space-between;margin-top:8px";
+  resPW.innerHTML = "<div><div class='r5-result-label'>Produtividade pelo peso</div><div class='r5-result-unit'>sacas / ha (sem desconto umidade)</div></div><div class='r5-result-val' id='r5ProdWeightVal'>—</div>";
+  box.appendChild(resPW);
+
   calcR5Ears();
 }
 
@@ -1372,6 +1487,70 @@ function calcR5Ears(){
   });
 
   setR5({r5_avgGPE: avgGPE, r5_avgFileiras: avgF, r5_avgGraos: avgG});
+
+  // ── Total de grãos das 8 espigas (soma fileiras × grãos/fileira) ──
+  var ears = d.r5_ears || [];
+  var totalGraos = 0, countEars = 0;
+  ears.forEach(function(e){
+    var f = parseFloat(e.fileiras), g = parseFloat(e.graos);
+    if(!isNaN(f) && !isNaN(g) && f > 0 && g > 0){
+      totalGraos += Math.round(f * g);
+      countEars++;
+    }
+  });
+
+  // ── P1000 = (peso total / total grãos) × 1000 ──
+  var totalW = parseFloat(d.r5_earsTotalWeight);
+  var avgEarW = null, p1000 = null;
+
+  if(!isNaN(totalW) && totalW > 0){
+    avgEarW = totalW / 8;
+    setR5({r5_avgEarWeight: avgEarW});
+
+    if(totalGraos > 0){
+      p1000 = (totalW / totalGraos) * 1000;
+      setR5({r5_p1000: p1000});
+    } else {
+      setR5({r5_p1000: null});
+    }
+
+    // Produtividade pelo peso direto
+    var pop = parseFloat(d.r5_stand_pop);
+    if(!isNaN(pop) && pop > 0){
+      var kgHa = (pop * avgEarW) / 1000;
+      setR5({r5_prod_weight_sc: kgHa / 60});
+    }
+  } else {
+    avgEarW = null;
+    p1000   = null;
+    setR5({r5_p1000: null, r5_avgEarWeight: null, r5_prod_weight_sc: null});
+  }
+
+  // ── Update Bloco 2 DOM ──
+  var avgEarEl = document.getElementById("r5AvgEarWeightVal");
+  var prodWEl  = document.getElementById("r5ProdWeightVal");
+  if(avgEarEl) avgEarEl.textContent = avgEarW ? avgEarW.toFixed(1) + " g" : "—";
+  if(prodWEl){
+    var pws = parseFloat(getR5().r5_prod_weight_sc);
+    prodWEl.textContent = (!isNaN(pws) && pws > 0) ? pws.toFixed(1) + " sc/ha" : (avgEarW && isNaN(parseFloat(d.r5_stand_pop)) ? "Preencha o estande" : "—");
+  }
+
+  // ── Update Bloco 3 DOM (P1000) ──
+  var p1000El  = document.getElementById("r5P1000Val");
+  var p1000Det = document.getElementById("r5P1000Detail");
+  if(p1000El){
+    p1000El.textContent = p1000 ? p1000.toFixed(1) + " g" : "—";
+  }
+  if(p1000Det){
+    if(p1000 && totalGraos > 0){
+      p1000Det.textContent = totalGraos.toLocaleString("pt-BR") + " grãos · " + countEars + " espigas";
+    } else if(!isNaN(totalW) && totalW > 0 && totalGraos === 0){
+      p1000Det.textContent = "Preencha fileiras e grãos no bloco 2";
+    } else {
+      p1000Det.textContent = "gramas";
+    }
+  }
+
   calcR5Productivity();
 }
 
@@ -1381,7 +1560,7 @@ function buildR5GrainsBlock(){
   wrap.className = "field";
   wrap.dataset.phaseField = "__r5grains";
   var lbl = document.createElement("label");
-  lbl.textContent = "3️⃣ Pesagem de 500 Grãos → Peso de 1000 Grãos";
+  lbl.textContent = "3️⃣ P1000 e Produtividade";
   wrap.appendChild(lbl);
   var box = document.createElement("div");
   box.className = "r5-block";
@@ -1397,19 +1576,18 @@ function renderR5GrainsBlock(){
   var d = getR5();
   box.innerHTML = "";
 
-  // ── Peso 500 grãos ──
-  var fld = makeR5Field("Peso de 500 grãos (g)", "r5_w500", "number", "Ex: 145.5", d.r5_w500 || "", function(v){
-    setR5({r5_w500: v}); calcR5Grains();
-  });
-  fld.style.marginBottom = "0";
-  box.appendChild(fld);
+  // ── P1000 calculado automaticamente ──
+  var infoLbl = document.createElement("div");
+  infoLbl.style.cssText = "font-size:12px;color:#7a7a7a;background:#f5f5f5;border-radius:8px;padding:9px 12px;line-height:1.5";
+  infoLbl.innerHTML = "O P1000 é calculado automaticamente a partir do <b>peso total dos grãos</b> e da <b>contagem de grãos das 8 espigas</b> (bloco 2).";
+  box.appendChild(infoLbl);
 
-  // P1000 result
-  var res = document.createElement("div");
-  res.className = "r5-result";
-  res.style.marginTop = "10px";
-  res.innerHTML = "<div><div class='r5-result-label'>Peso de 1000 grãos (P1000)</div><div class='r5-result-unit'>gramas</div></div><div class='r5-result-val' id='r5P1000Val'>—</div>";
-  box.appendChild(res);
+  // P1000 result card
+  var resP = document.createElement("div");
+  resP.className = "r5-result";
+  resP.style.marginTop = "10px";
+  resP.innerHTML = "<div><div class='r5-result-label'>P1000 — Peso de 1000 grãos</div><div class='r5-result-unit' id='r5P1000Detail'>gramas</div></div><div class='r5-result-val' id='r5P1000Val'>—</div>";
+  box.appendChild(resP);
 
   // Divider
   var div0 = document.createElement("div");
@@ -1441,8 +1619,14 @@ function renderR5GrainsBlock(){
   // Fator desconto result
   var resFator = document.createElement("div");
   resFator.style.cssText = "background:#fff3cd;border:1px solid #f5c518;border-radius:10px;padding:10px 14px;display:flex;align-items:center;justify-content:space-between;margin-top:10px";
-  resFator.innerHTML = "<div><div style='font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:#856404'>Desconto de umidade</div><div style='font-size:11px;color:#856404'>diferença × 1,2</div></div><div style='font-family:monospace;font-size:18px;font-weight:700;color:#856404' id='r5UmFator'>—</div>";
+  resFator.innerHTML = "<div><div style='font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:#856404'>Desconto de umidade</div><div style='font-size:11px;color:#856404'>(100−umid.atual)÷(100−umid.desejada)</div></div><div style='font-family:monospace;font-size:18px;font-weight:700;color:#856404' id='r5UmFator'>—</div>";
   box.appendChild(resFator);
+
+  // Peso corrigido das 8 espigas
+  var resPesoDesc = document.createElement("div");
+  resPesoDesc.style.cssText = "background:#fff8e1;border:1px solid #f5c518;border-radius:10px;padding:9px 14px;display:flex;align-items:center;justify-content:space-between;margin-top:8px";
+  resPesoDesc.innerHTML = "<div style='font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:#856404'>Peso corrigido (8 espigas)</div><div style='font-family:monospace;font-size:14px;font-weight:700;color:#856404' id='r5PesoDescVal'>—</div>";
+  box.appendChild(resPesoDesc);
 
   // Divider
   var div1 = document.createElement("div");
@@ -1458,7 +1642,7 @@ function renderR5GrainsBlock(){
   // Produtividade com desconto
   var res3 = document.createElement("div");
   res3.style.cssText = "background:#1a7a2e;border-radius:10px;padding:13px 14px;display:flex;align-items:center;justify-content:space-between";
-  res3.innerHTML = "<div><div class='r5-result-label' style='font-size:12px'>✅ Produtividade c/ desconto</div><div class='r5-result-unit'>sacas / ha · umidade corrigida</div></div><div class='r5-result-val' style='font-size:24px' id='r5ProdDescVal'>—</div>";
+  res3.innerHTML = "<div><div class='r5-result-label' style='font-size:12px'>✅ Produtividade c/ desconto</div><div class='r5-result-unit' id='r5ProdDescUnit'>sacas / ha · umidade corrigida</div></div><div class='r5-result-val' style='font-size:24px' id='r5ProdDescVal'>—</div>";
   box.appendChild(res3);
 
   var calcBtn = document.createElement("button");
@@ -1470,95 +1654,90 @@ function renderR5GrainsBlock(){
   });
   box.appendChild(calcBtn);
 
-  calcR5Grains();
+  // Trigger calcR5Ears to populate P1000 from state
+  setTimeout(function(){ calcR5Ears(); }, 0);
 }
 
 function calcR5Grains(){
-  var d = getR5();
-  var w500 = parseFloat(d.r5_w500);
-  var p1000El = document.getElementById("r5P1000Val");
-  if(!isNaN(w500) && w500 > 0){
-    var p1000 = w500 * 2;
-    if(p1000El) p1000El.textContent = p1000.toFixed(1) + " g";
-    setR5({r5_p1000: p1000});
-  } else {
-    if(p1000El) p1000El.textContent = "—";
-  }
+  // P1000 now entered directly — just trigger productivity calc
   calcR5Productivity();
 }
 
 function calcR5Productivity(){
-  var d = getR5();
+  var d   = getR5();
+  var pop   = parseFloat(d.r5_stand_pop);    // plantas/ha
+  var gpe   = parseFloat(d.r5_avgGPE);       // grãos/espiga (média das 8)
+  var p1000 = parseFloat(d.r5_p1000);        // g (calculado de peso total / total grãos * 1000)
 
-  // Read from state (set by each block's own calc function)
-  var pop   = parseFloat(d.r5_stand_pop);
-  var gpe   = parseFloat(d.r5_avgGPE);
-  var p1000 = parseFloat(d.r5_p1000);
-
-  // Fallback: read from DOM if state not yet set
-  if(isNaN(pop)){
-    var spEl = document.getElementById("r5_spikes");
-    var scEl = document.getElementById("r5_spacing");
-    if(spEl && scEl){
-      var sp = parseFloat(spEl.value), sc = parseFloat(scEl.value);
-      if(!isNaN(sp) && !isNaN(sc) && sc > 0) pop = Math.round((sp / (20 * sc)) * 10000);
-    }
-  }
-  if(isNaN(p1000)){
-    var wEl = document.getElementById("r5_w500");
-    if(wEl){ var w = parseFloat(wEl.value); if(!isNaN(w) && w > 0) p1000 = w * 2; }
-  }
-  if(isNaN(gpe)){
-    // recalc from ear inputs
-    var total = 0, count = 0;
-    for(var i = 1; i <= 8; i++){
-      var fEl = document.querySelector("[id='" + "r5_f" + i + "']");
-      var gEl = document.querySelector("[id='" + "r5_g" + i + "']");
-      // fallback: just use stored r5_ears
-    }
-    var ears = d.r5_ears || [];
-    if(typeof ears === "string"){ try{ ears = JSON.parse(ears); }catch(e){ ears = []; } }
-    var gpes = ears.map(function(e){ var f=parseFloat(e.fileiras),g=parseFloat(e.graos); return (!isNaN(f)&&!isNaN(g)&&f>0&&g>0)?f*g:null; }).filter(function(v){return v!==null;});
-    if(gpes.length) gpe = gpes.reduce(function(a,b){return a+b;},0)/gpes.length;
-  }
-
-  var el     = document.getElementById("r5ProdVal");
-  var elDesc = document.getElementById("r5ProdDescVal");
+  var el      = document.getElementById("r5ProdVal");
+  var elDesc  = document.getElementById("r5ProdDescVal");
   var elFator = document.getElementById("r5UmFator");
 
-  if(!isNaN(pop) && !isNaN(gpe) && !isNaN(p1000) && pop>0 && gpe>0 && p1000>0){
-    var kgHa = (pop * gpe * p1000) / 1000000;
-    var scHa = kgHa / 60;
-    if(el){ el.textContent = scHa.toFixed(1) + " sc/ha"; el.style.fontSize = "17px"; }
+  // ── Produtividade via contagem + P1000 ──
+  // kgHa = estande × GPE × P1000 / 1.000.000  →  scHa = kgHa / 60
+  var scHa = null;
+  if(!isNaN(pop) && pop > 0 && !isNaN(gpe) && gpe > 0 && !isNaN(p1000) && p1000 > 0){
+    scHa = (pop * gpe * p1000) / 1000000 / 60;
     setR5({r5_prod_sc: scHa});
+    if(el){ el.textContent = scHa.toFixed(1) + " sc/ha"; el.style.fontSize = "17px"; }
+  } else {
+    if(el) el.textContent = "—";
+    setR5({r5_prod_sc: null});
+  }
 
-    // ── Desconto de umidade ──
-    var umA = parseFloat(d.r5_umActual);
-    var umT = parseFloat(d.r5_umTarget);
-    if(!isNaN(umA) && !isNaN(umT) && umA > umT){
-      var diff    = umA - umT;
-      var fator   = diff * 1.2;  // % de desconto
-      var scDesc  = scHa * (1 - fator / 100);
-      if(elFator)  elFator.textContent  = fator.toFixed(2) + "%";
-      if(elDesc){  elDesc.textContent   = scDesc.toFixed(1) + " sc/ha"; elDesc.style.fontSize = "22px"; }
-      setR5({r5_fator_desc: fator, r5_prod_desc_sc: scDesc});
-    } else {
-      if(elFator) elFator.textContent = "—";
-      if(elDesc)  elDesc.textContent  = "—";
-      if(!isNaN(umA) && !isNaN(umT) && umA <= umT){
-        if(elFator) elFator.textContent = "Sem desconto";
-        if(elDesc)  elDesc.textContent  = scHa.toFixed(1) + " sc/ha";
+  // ── Fallback: produtividade pelo peso direto (se não tem GPE/P1000) ──
+  // kgHa = estande × peso_médio_espiga_g / 1000  →  scHa_w = kgHa / 60
+  var prodWeight = parseFloat(d.r5_prod_weight_sc);
+  var scBase = scHa !== null ? scHa : (!isNaN(prodWeight) && prodWeight > 0 ? prodWeight : null);
+
+  // Label indicando qual base está sendo usada
+  var elProdUnit = document.getElementById("r5ProdDescUnit");
+  if(elProdUnit){
+    elProdUnit.textContent = scHa !== null
+      ? "sacas / ha · via contagem + P1000"
+      : (scBase !== null ? "sacas / ha · via peso das espigas" : "sacas / ha · umidade corrigida");
+  }
+
+  // ── Desconto de umidade (fórmula MAPA) ──
+  // PesoFinal = ((100 − umid.atual) / (100 − umid.desejada)) × PesoInicial
+  var umA       = parseFloat(d.r5_umActual);
+  var umT       = parseFloat(d.r5_umTarget);
+  var pesoTotal = parseFloat(d.r5_earsTotalWeight);
+
+  if(!isNaN(umA) && !isNaN(umT) && (100 - umT) > 0){
+    var fatorMapa = (100 - umA) / (100 - umT);
+    var pctDesc   = (1 - fatorMapa) * 100;
+
+    if(elFator){
+      if(umA > umT){
+        elFator.textContent = pctDesc.toFixed(2) + "%";
+        elFator.style.color = "#856404";
+      } else {
+        elFator.textContent = "Sem desconto";
+        elFator.style.color = "#1a7a2e";
       }
     }
+
+    if(scBase !== null){
+      var scDesc = scBase * fatorMapa;
+      if(elDesc){ elDesc.textContent = scDesc.toFixed(1) + " sc/ha"; elDesc.style.fontSize = "22px"; }
+      setR5({r5_fator_mapa: fatorMapa, r5_pct_desc: pctDesc, r5_prod_desc_sc: scDesc});
+    } else {
+      if(elDesc) elDesc.textContent = "—";
+      if(elFator && umA > umT) elFator.textContent = pctDesc.toFixed(2) + "% (preencha produtividade)";
+    }
+
+    // Peso corrigido das 8 espigas
+    var elPesoDesc = document.getElementById("r5PesoDescVal");
+    if(!isNaN(pesoTotal) && pesoTotal > 0 && elPesoDesc){
+      var pesoFinal = pesoTotal * fatorMapa;
+      elPesoDesc.textContent = pesoFinal.toFixed(1) + " g  (desc: " + (pesoTotal - pesoFinal).toFixed(1) + " g)";
+    }
+
   } else {
-    if(el)     el.textContent    = "—";
-    if(elDesc) elDesc.textContent = "—";
     if(elFator) elFator.textContent = "—";
-    var missing = [];
-    if(isNaN(pop)   || pop   <= 0) missing.push("estande");
-    if(isNaN(gpe)   || gpe   <= 0) missing.push("grãos/espiga");
-    if(isNaN(p1000) || p1000 <= 0) missing.push("P1000");
-    if(el && missing.length) el.title = "Faltando: " + missing.join(", ");
+    if(elDesc)  elDesc.textContent  = scBase ? scBase.toFixed(1) + " sc/ha" : "—";
+    if(scBase)  setR5({r5_fator_mapa: 1, r5_pct_desc: 0, r5_prod_desc_sc: scBase});
   }
 }
 
@@ -1717,13 +1896,17 @@ function collectPhaseEntry(){
       entry.r5_stand_pop = d.r5_stand_pop || "";
       entry.r5_ears      = JSON.stringify(d.r5_ears || []);
       entry.r5_avgGPE    = d.r5_avgGPE    || "";
-      entry.r5_w500      = d.r5_w500      || "";
+      // r5_w500 deprecated — P1000 entered directly
       entry.r5_p1000          = d.r5_p1000          || "";
       entry.r5_prod_sc        = d.r5_prod_sc        || "";
       entry.r5_umActual       = d.r5_umActual       || "";
       entry.r5_umTarget       = d.r5_umTarget       || "";
-      entry.r5_fator_desc     = d.r5_fator_desc     || "";
-      entry.r5_prod_desc_sc   = d.r5_prod_desc_sc   || "";
+      entry.r5_fator_mapa     = d.r5_fator_mapa     || "";
+      entry.r5_pct_desc      = d.r5_pct_desc      || "";
+      entry.r5_prod_desc_sc    = d.r5_prod_desc_sc    || "";
+      entry.r5_earsTotalWeight  = d.r5_earsTotalWeight  || "";
+      entry.r5_avgEarWeight     = d.r5_avgEarWeight     || "";
+      entry.r5_prod_weight_sc   = d.r5_prod_weight_sc   || "";
       return;
     }
     const el = $(`[data-phase-input="${field.id}"]`);
@@ -2114,8 +2297,25 @@ function buildR5Comparison(rows){
       return all.length ? all.reduce((a,b)=>a+b,0)/all.length : null;
     };
 
-    const prodDesc = avg("r5_prod_desc_sc") || avg("r5_prod_sc");
-    const prodBruta = avg("r5_prod_sc");
+    // On-the-fly recalc: fix r5_pct_desc if missing but umidade is present
+    ds.forEach(d => {
+      const umA = parseFloat(d.r5_umActual), umT = parseFloat(d.r5_umTarget);
+      if(!isNaN(umA) && !isNaN(umT) && (100-umT) > 0){
+        const fm = (100-umA)/(100-umT);
+        if(!d.r5_pct_desc || parseFloat(d.r5_pct_desc) === 0){
+          d.r5_fator_mapa = fm;
+          d.r5_pct_desc   = (1-fm)*100;
+        }
+        // fix r5_prod_desc_sc using weight-based prod if missing
+        if(!d.r5_prod_desc_sc || parseFloat(d.r5_prod_desc_sc) === 0){
+          const baseP = parseFloat(d.r5_prod_sc) || parseFloat(d.r5_prod_weight_sc);
+          if(!isNaN(baseP) && baseP > 0) d.r5_prod_desc_sc = baseP * fm;
+        }
+      }
+    });
+
+    const prodDesc  = avg("r5_prod_desc_sc") || avg("r5_prod_sc") || avg("r5_prod_weight_sc");
+    const prodBruta = avg("r5_prod_sc") || avg("r5_prod_weight_sc");
     return {
       name:      row.name,
       index:     row.index,
@@ -2125,7 +2325,8 @@ function buildR5Comparison(rows){
       gpe:       avgGPE(),
       umActual:  avg("r5_umActual"),
       umTarget:  avg("r5_umTarget"),
-      fatorDesc: avg("r5_fator_desc"),
+      pctDesc:   avg("r5_pct_desc"),
+      fatorMapa: avg("r5_fator_mapa"),
       prodBruta,
       prodDesc,
     };
@@ -2179,7 +2380,7 @@ function buildR5Comparison(rows){
       </div>
       <div style="font-size:11px;color:#888;margin-top:3px">
         Prod. bruta: ${t.prodBruta ? t.prodBruta.toFixed(1)+" sc/ha" : "—"}
-        ${t.fatorDesc ? " · Desconto: "+t.fatorDesc.toFixed(2)+"%" : ""}
+        ${t.pctDesc ? " · Desconto: "+t.pctDesc.toFixed(2)+"% umid." : ""}
         ${t.umActual ? " · Umid. atual: "+t.umActual.toFixed(1)+"%" : ""}
       </div>`;
     barSection.appendChild(row);
@@ -2196,7 +2397,7 @@ function buildR5Comparison(rows){
       <th>GPE (grãos/espiga)</th>
       <th>P1000 (g)</th>
       <th>Umid. atual</th>
-      <th>Desconto</th>
+      <th>Desconto umid.</th>
       <th>Prod. bruta</th>
       <th>Prod. c/ desc.</th>
     </tr>
@@ -2207,7 +2408,7 @@ function buildR5Comparison(rows){
       <td>${t.gpe ? Math.round(t.gpe) : "-"}</td>
       <td>${t.p1000 ? t.p1000.toFixed(1)+"g" : "-"}</td>
       <td>${t.umActual ? t.umActual.toFixed(1)+"%" : "-"}</td>
-      <td>${t.fatorDesc ? t.fatorDesc.toFixed(2)+"%" : "-"}</td>
+      <td>${t.pctDesc ? t.pctDesc.toFixed(2)+"%" : "-"}</td>
       <td>${t.prodBruta ? t.prodBruta.toFixed(1)+" sc/ha" : "-"}</td>
       <td><b>${t.prodDesc ? t.prodDesc.toFixed(1)+" sc/ha" : "-"}</b></td>
     </tr>`).join("")}`;
@@ -2250,13 +2451,16 @@ function buildR5DetailCard(row){
       <tr><td>Espaçamento</td><td>${d.r5_spacing ? (parseFloat(d.r5_spacing)*100).toFixed(0)+" cm" : "-"}</td></tr>
       <tr><td>Estande estimado</td><td>${d.r5_stand_pop ? Number(d.r5_stand_pop).toLocaleString("pt-BR")+" pl/ha" : "-"}</td></tr>
       <tr><td>Grãos pot./espiga (média 8 esp.)</td><td>${avgGPE ? Math.round(avgGPE) : "-"}</td></tr>
-      <tr><td>Peso 500 grãos</td><td>${d.r5_w500 ? parseFloat(d.r5_w500).toFixed(1)+"g" : "-"}</td></tr>
-      <tr><td>P1000</td><td>${d.r5_p1000 ? parseFloat(d.r5_p1000).toFixed(1)+"g" : "-"}</td></tr>
+      <tr><td>P1000 (calculado)</td><td>${d.r5_p1000 ? parseFloat(d.r5_p1000).toFixed(1)+"g" : "-"}</td></tr>
       <tr><td>Umidade atual</td><td>${d.r5_umActual ? parseFloat(d.r5_umActual).toFixed(1)+"%" : "-"}</td></tr>
       <tr><td>Umidade desejada</td><td>${d.r5_umTarget ? parseFloat(d.r5_umTarget).toFixed(1)+"%" : "-"}</td></tr>
-      <tr><td>Desconto de umidade</td><td>${d.r5_fator_desc ? parseFloat(d.r5_fator_desc).toFixed(2)+"%" : "-"}</td></tr>
+      <tr><td>Fator MAPA</td><td>${d.r5_fator_mapa ? "×"+parseFloat(d.r5_fator_mapa).toFixed(4) : "-"}</td></tr>
+      <tr><td>Desconto umidade</td><td>${d.r5_pct_desc ? parseFloat(d.r5_pct_desc).toFixed(2)+"%" : "-"}</td></tr>
       <tr><td>Produtividade bruta</td><td>${d.r5_prod_sc ? parseFloat(d.r5_prod_sc).toFixed(1)+" sc/ha" : "-"}</td></tr>
       <tr><td><b>Produtividade c/ desconto</b></td><td><b>${d.r5_prod_desc_sc ? parseFloat(d.r5_prod_desc_sc).toFixed(1)+" sc/ha" : (d.r5_prod_sc ? parseFloat(d.r5_prod_sc).toFixed(1)+" sc/ha" : "-")}</b></td></tr>
+      <tr><td>Peso total (8 espigas)</td><td>${d.r5_earsTotalWeight ? parseFloat(d.r5_earsTotalWeight).toFixed(1)+"g" : "-"}</td></tr>
+      <tr><td>Peso médio/espiga</td><td>${d.r5_avgEarWeight ? parseFloat(d.r5_avgEarWeight).toFixed(1)+"g" : "-"}</td></tr>
+      <tr><td><b>Produtividade pelo peso</b></td><td><b>${d.r5_prod_weight_sc ? parseFloat(d.r5_prod_weight_sc).toFixed(1)+" sc/ha" : "-"}</b></td></tr>
       ${entry.r5Notes ? `<tr><td>Observações</td><td>${escapeHtml(entry.r5Notes)}</td></tr>` : ""}`;
     card.appendChild(tbl);
   });
@@ -2471,7 +2675,7 @@ function getComparisonData(){
         extra: [
           {k:"Estande",    v: avg("r5_stand_pop") ? Math.round(avg("r5_stand_pop")).toLocaleString("pt-BR")+" pl/ha" : "—"},
           {k:"P1000",      v: avg("r5_p1000")     ? avg("r5_p1000").toFixed(1)+"g" : "—"},
-          {k:"Desconto",   v: avg("r5_fator_desc") ? avg("r5_fator_desc").toFixed(2)+"%" : "—"},
+          {k:"Desconto",   v: avg("r5_pct_desc") ? avg("r5_pct_desc").toFixed(2)+"%" : "—"},
           {k:"Prod. bruta",v: avg("r5_prod_sc")   ? avg("r5_prod_sc").toFixed(1)+" sc/ha" : "—"},
         ]
       };
@@ -2554,7 +2758,9 @@ function buildSimpleReportHTML(){
           "P1000 — peso de grão (g)":    avg("r5_p1000"),
           "Grãos/espiga":                avgGPE(),
           "Estande (pl/ha)":             avg("r5_stand_pop"),
-          "Desconto umidade (%)":        avg("r5_fator_desc"),
+          "Desconto umidade (%)":        avg("r5_pct_desc"),
+          "Prod. pelo peso (sc/ha)":      avg("r5_prod_weight_sc"),
+          "Peso médio/espiga (g)":        avg("r5_avgEarWeight"),
         }
       };
     }).sort((a,b)=>(b.params["Produt. c/ desconto (sc/ha)"]||0)-(a.params["Produt. c/ desconto (sc/ha)"]||0));
